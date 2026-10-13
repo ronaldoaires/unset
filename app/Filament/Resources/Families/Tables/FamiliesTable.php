@@ -23,6 +23,7 @@ class FamiliesTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn($query) => $query->with(['thumbnail', 'primaryImage', 'brand']))
             ->columns([
                 ImageColumn::make('thumbnail_url')
                     ->label('')
@@ -117,13 +118,14 @@ class FamiliesTable
                         ->icon('heroicon-o-check-circle')
                         ->color('success')
                         ->authorize('approve')
-                        ->visible(fn(Family $record) => $record->status !== Family::STATUS_PUBLISHED)
+                        ->visible(fn(Family $record) => $record->isPending() || $record->isRejected())
                         ->requiresConfirmation()
                         ->action(function (Family $record) {
                             $record->update([
-                                'status'      => Family::STATUS_PUBLISHED,
-                                'approved_by' => auth()->id(),
-                                'approved_at' => now(),
+                                'status'           => Family::STATUS_PUBLISHED,
+                                'approved_by'      => auth()->id(),
+                                'approved_at'      => now(),
+                                'rejection_reason' => null,
                             ]);
                         }),
 
@@ -143,7 +145,7 @@ class FamiliesTable
                                 'status'           => Family::STATUS_REJECTED,
                                 'approved_by'      => auth()->id(),
                                 'approved_at'      => now(),
-                                'rejection_reason' => null,
+                                'rejection_reason' => $data['rejection_reason'],
                             ]);
                         }),
 

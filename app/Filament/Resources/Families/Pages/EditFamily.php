@@ -49,6 +49,14 @@ class EditFamily extends EditRecord
             $data['approved_at'] = now();
         }
 
+        // A moderator fixing a rejected family puts it back in the unreviewed
+        // state, so it stays editable until the superadmin touches it again.
+        if (! auth()->user()->isSuperAdmin() && $this->record->isRejected()) {
+            $data['approved_by']      = null;
+            $data['approved_at']      = null;
+            $data['rejection_reason'] = null;
+        }
+
         $this->incomingRfaPath    = $data['rfa_upload'] ?? null;
         $this->incomingCoverImage = $data['cover_image_upload'] ?? null;
 
@@ -90,13 +98,14 @@ class EditFamily extends EditRecord
             $existing->delete();
         }
 
-        $disk = Storage::disk('public');
+        // The RFA lives on the private disk.
+        $disk = Storage::disk('local');
 
         $path = app(RfaFileService::class)->renameToSlug($path, $this->record->slug);
 
         $this->record->files()->create([
             'type'          => FamilyFile::TYPE_RFA,
-            'disk'          => 'public',
+            'disk'          => 'local',
             'path'          => $path,
             'original_name' => basename($path),
             'size_bytes'    => $disk->size($path),
@@ -140,6 +149,7 @@ class EditFamily extends EditRecord
 
         if ($oldImage) {
             $oldImage->update([...$attributes, 'path' => $imagePath, 'size_bytes' => $disk->size($imagePath)]);
+            $oldImage->touch();
         } else {
             $this->record->files()->create([
                 ...$attributes,
@@ -153,6 +163,7 @@ class EditFamily extends EditRecord
 
         if ($oldThumb) {
             $oldThumb->update([...$attributes, 'path' => $thumbPath, 'size_bytes' => $disk->size($thumbPath)]);
+            $oldImage->touch();
         } else {
             $this->record->files()->create([
                 ...$attributes,

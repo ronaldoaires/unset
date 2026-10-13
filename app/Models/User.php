@@ -10,8 +10,10 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Traits\HasPremium;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Filament\Models\Contracts\FilamentUser;
+use Filament\Panel;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     use HasPremium;
     use HasApiTokens, Notifiable;
@@ -136,7 +138,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
         $usedFamilyIds = $this->downloads()
             ->where('downloaded_at', '>=', now()->startOfMonth())
-            ->whereHas('family', fn ($query) => $query->where('is_free', false))
+            ->whereHas('family', fn($query) => $query->where('is_free', false))
             ->whereNotIn('family_id', $this->purchasedFamilyIds())
             ->pluck('family_id')
             ->unique();
@@ -229,5 +231,13 @@ class User extends Authenticatable implements MustVerifyEmail
         }
 
         return $plan->can($key);
+    }
+
+    /**
+     * Only active moderators and superadmins may enter the admin panel.
+     */
+    public function canAccessPanel(Panel $panel): bool
+    {
+        return $this->isAdmin() && $this->is_active;
     }
 }

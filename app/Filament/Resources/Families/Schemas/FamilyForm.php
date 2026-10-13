@@ -109,6 +109,8 @@ class FamilyForm
                     FileUpload::make('cover_image_upload')
                         ->label('Imagem de capa')
                         ->image()
+                        ->acceptedFileTypes(['image/png', 'image/jpeg', 'image/webp'])
+                        ->maxSize(5120) // 5 MB, in KB
                         ->imageEditor()
                         ->disk('public')
                         ->directory('families/images')
@@ -120,7 +122,6 @@ class FamilyForm
                         // Kept as a raw upload (not auto-stored) so CreateFamily/EditFamily
                         // can run it through ImageService (webp + thumbnail).
                         ->storeFiles(false)
-                        ->helperText('A miniatura é gerada automaticamente.')
                         ->afterStateHydrated(
                             fn(FileUpload $component, ?Family $record) => $component->state($record?->primaryImage?->path)
                         ),
@@ -176,6 +177,7 @@ class FamilyForm
             Section::make('Tags')
                 ->components([
                     TagsInput::make('tag_list')
+                        ->nestedRecursiveRules(['max:80'])
                         ->label('Tags')
                         ->placeholder('Digite e pressione Enter')
                         // No separator() on purpose: with one, the state becomes a
@@ -199,6 +201,17 @@ class FamilyForm
                         ->native(false),
                 ])
                 ->disabled(fn(?Family $record) => FamilyResource::isLocked($record)),
+
+            Section::make('Motivo da rejeição')
+                ->components([
+                    TextEntry::make('rejection_reason_display')
+                        ->label('Motivo')
+                        ->state(fn(?Family $record) => $record?->rejection_reason),
+                ])
+                // Moderators only see this while the family is rejected.
+                ->visible(fn(?Family $record) => $record !== null
+                    && $record->isRejected()
+                    && ! auth()->user()->isSuperAdmin()),
 
             Section::make('Aprovação')
                 ->columns(2)

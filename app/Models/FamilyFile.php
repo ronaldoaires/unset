@@ -81,7 +81,13 @@ class FamilyFile extends Model
                     return null;
                 }
 
-                return Storage::disk($this->disk ?? 'public')->url($this->path);
+                $url = Storage::disk($this->disk ?? 'public')->url($this->path);
+
+                // A replaced cover keeps the same filename, so the version query
+                // string makes browsers drop the cached copy.
+                return $this->updated_at
+                    ? $url . '?v=' . $this->updated_at->timestamp
+                    : $url;
             }
         );
     }

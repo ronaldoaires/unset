@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('family_purchases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('family_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->foreignId('family_id')->constrained()->restrictOnDelete();
             $table->decimal('amount', 10, 2);
             $table->string('status')->default('pending'); // pending, paid, refunded
             $table->string('payment_id')->nullable();     // external Mercado Pago ID

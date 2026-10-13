@@ -21,6 +21,9 @@ class FamilyDownloadController extends Controller
 
         $file = $family->rfaFiles()->firstOrFail();
 
+        // Fail before counting anything if the file is missing from disk.
+        abort_unless(Storage::disk($file->disk)->exists($file->path), 404);
+
         // The history row and the counter go together or not at all.
         DB::transaction(function () use ($request, $family) {
             Download::create([

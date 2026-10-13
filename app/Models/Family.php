@@ -315,6 +315,6 @@ class Family extends Model
     // ─── Miscellaneous ─────────────────────────────────────────────
     public function isFree(): bool
     {
-        return $this->price == 0 || $this->price === null;
+        return (bool) $this->is_free;
     }
 }
