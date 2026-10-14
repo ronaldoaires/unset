@@ -16,6 +16,7 @@ use Filament\Tables\Table;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Actions\Action;
 use Filament\Infolists\Components\TextEntry;
+use Filament\Tables\Columns\IconColumn;
 
 class UsersTable
 {
@@ -55,6 +56,12 @@ class UsersTable
                         default               => 'gray',
                     })
                     ->sortable(),
+
+                IconColumn::make('email_verified')
+                    ->label('E-mail verificado')
+                    ->boolean()
+                    ->state(fn(User $record) => $record->email_verified_at !== null)
+                    ->visibleFrom('md'),
 
                 TextColumn::make('activeSubscription.plan.name')
                     ->label('Plano')
@@ -106,6 +113,10 @@ class UsersTable
 
                 TernaryFilter::make('is_active')
                     ->label('Conta ativa'),
+
+                TernaryFilter::make('email_verified_at')
+                    ->label('E-mail verificado')
+                    ->nullable(),
 
                 TernaryFilter::make('delete_requested_at')
                     ->label('Exclusão solicitada')
