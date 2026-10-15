@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Laravel\Socialite\Facades\Socialite;
 
 class SocialLoginController extends Controller
@@ -52,14 +53,23 @@ class SocialLoginController extends Controller
             return $this->fail('O Google não informou um e-mail verificado para esta conta.');
         }
 
-        $user = DB::transaction(fn () => $this->resolveUser(
+        $resolve = fn() => DB::transaction(fn() => $this->resolveUser(
             $provider,
             (string) $socialUser->getId(),
             $email,
             trim((string) $socialUser->getName()),
         ));
 
-        if (! $user->is_active) {
+        try {
+            $user = $resolve();
+        } catch (UniqueConstraintViolationException) {
+            // A parallel callback created the same user or link first. Its
+            // data is committed by now, so resolving again finds it.
+            $user = $resolve();
+        }
+
+        // resolveUser() returns null for a deactivated account, before changing anything.
+        if ($user === null) {
             return $this->fail('Sua conta está desativada. Entre em contato com o suporte.');
         }
 
@@ -74,8 +84,12 @@ class SocialLoginController extends Controller
      * 1) provider account already linked -> that user;
      * 2) e-mail already registered       -> link the provider to that user;
      * 3) otherwise                       -> create a new verified user.
+     *
+     * Returns null when the matched account is deactivated. The check runs
+     * before any change, so a blocked account never loses its password or
+     * gets a provider linked to it.
      */
-    private function resolveUser(string $provider, string $providerId, string $email, string $name): User
+    private function resolveUser(string $provider, string $providerId, string $email, string $name): ?User
     {
         $account = SocialAccount::with('user')
             ->where('provider', $provider)
@@ -83,12 +97,17 @@ class SocialLoginController extends Controller
             ->first();
 
         if ($account) {
-            return $account->user;
+            return $account->user->is_active ? $account->user : null;
         }
 
         $user = User::where('email', $email)->first();
 
         if ($user) {
+            // Must come before the password wipe and the link below.
+            if (! $user->is_active) {
+                return null;
+            }
+
             if (! $user->hasVerifiedEmail()) {
                 // The address was never confirmed on this account, so whoever
                 // created it may not own it. Their password is dropped before
