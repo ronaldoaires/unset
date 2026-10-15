@@ -13,9 +13,9 @@
                     href="{{ route($item['route']) }}"
                     @class([
                         'rounded-control px-3 py-2 text-sm font-medium transition hover:bg-on-header/10',
-                        'bg-on-header/15' => request()->routeIs($item['route']),
+                        'bg-on-header/15' => request()->routeIs($item['active'] ?? $item['route']),
                     ])
-                    @if (request()->routeIs($item['route'])) aria-current="page" @endif
+                    @if (request()->routeIs($item['active'] ?? $item['route'])) aria-current="page" @endif
                 >
                     {{ $item['label'] }}
                 </a>

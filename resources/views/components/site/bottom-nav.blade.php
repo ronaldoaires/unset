@@ -7,7 +7,7 @@
 >
     <ul class="mx-auto flex max-w-md items-stretch justify-around">
         @foreach ($items as $item)
-            @php($active = request()->routeIs($item['route']))
+            @php($active = request()->routeIs($item['active'] ?? $item['route']))
             <li class="flex-1">
                 <a
                     href="{{ route($item['route']) }}"

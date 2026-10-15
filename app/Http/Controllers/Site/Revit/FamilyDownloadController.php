@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Site;
+namespace App\Http\Controllers\Site\Revit;
 
 use App\Models\Download;
 use App\Models\Family;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Http\Controllers\Controller;
@@ -17,7 +18,7 @@ class FamilyDownloadController extends Controller
         abort_unless($family->isPublished(), 404);
 
         // Runs FamilyPolicy::download(): free, purchased or within the plan limit.
-        $this->authorize('download', $family);
+        Gate::authorize('download', $family);
 
         $file = $family->rfaFiles()->firstOrFail();
 

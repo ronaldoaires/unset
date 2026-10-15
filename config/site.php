@@ -16,7 +16,9 @@ return [
 
     'nav' => [
         ['label' => 'Início',    'route' => 'home',            'icon' => 'home',               'enabled' => true,  'bottom' => true],
-        ['label' => 'Famílias',  'route' => 'families.index',  'icon' => 'rectangle-stack',    'enabled' => false, 'bottom' => true],
+        // "active" widens the highlight to every page of the section.
+        ['label' => 'Famílias',  'route' => 'revit.families.index', 'active' => 'revit.families.*', 'icon' => 'rectangle-stack', 'enabled' => true, 'bottom' => true],
+        
         ['label' => 'Templates', 'route' => 'templates.index', 'icon' => 'document-duplicate', 'enabled' => false, 'bottom' => false],
         ['label' => 'Planilhas', 'route' => 'sheets.index',    'icon' => 'table-cells',        'enabled' => false, 'bottom' => false],
         ['label' => 'Cursos',    'route' => 'courses.index',   'icon' => 'academic-cap',       'enabled' => false, 'bottom' => false],
