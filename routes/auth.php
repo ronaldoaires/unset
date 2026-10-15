@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\SocialLoginController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/cadastro', [RegisterController::class, 'create'])->name('register');
@@ -13,6 +14,17 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/entrar', [LoginController::class, 'create'])->name('login');
     Route::post('/entrar', [LoginController::class, 'store'])->middleware('throttle:20,1');
+
+    // To add another provider later (e.g. Facebook), include it in whereIn().
+    Route::get('/entrar/{provider}', [SocialLoginController::class, 'redirect'])
+        ->whereIn('provider', ['google'])
+        ->middleware('throttle:20,1')
+        ->name('social.redirect');
+
+    Route::get('/entrar/{provider}/retorno', [SocialLoginController::class, 'callback'])
+        ->whereIn('provider', ['google'])
+        ->middleware('throttle:20,1')
+        ->name('social.callback');
 
     Route::get('/esqueci-minha-senha', [PasswordResetController::class, 'create'])->name('password.request');
     Route::post('/esqueci-minha-senha', [PasswordResetController::class, 'store'])

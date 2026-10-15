@@ -6,7 +6,15 @@
             <a href="{{ route('register') }}" class="font-medium text-amber-700 underline">Cadastre-se</a>
         </p>
 
-        <form method="POST" action="{{ route('login') }}" class="mt-6 space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+        <x-auth.google-button class="mt-6" />
+
+        <div class="my-5 flex items-center gap-3 text-xs text-zinc-500">
+            <span class="h-px flex-1 bg-zinc-200"></span>
+            ou entre com e-mail
+            <span class="h-px flex-1 bg-zinc-200"></span>
+        </div>
+
+        <form method="POST" action="{{ route('login') }}" class="space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
             @csrf
 
             <x-ui.input name="email" label="E-mail" type="email" autocomplete="email" required autofocus />
