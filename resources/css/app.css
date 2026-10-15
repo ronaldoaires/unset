@@ -1,9 +1,87 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
+/* Soft page transitions between server-rendered pages (ignored where unsupported). */
+@view-transition {
+    navigation: auto;
+}
+
+/* Tailwind v4 resets buttons to the default cursor: restore the pointer. */
+@layer base {
+    button:not(:disabled),
+    [role='button']:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+/* Loading state set by resources/js/app.js while a form is being submitted. */
+@keyframes ui-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@layer components {
+    button[data-loading] {
+        cursor: progress;
+    }
+
+    /* Spinner as the first flex item of the button, in the text color. */
+    button[data-loading]::before {
+        content: '';
+        flex: none;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid currentColor;
+        border-right-color: transparent;
+        border-radius: 9999px;
+        animation: ui-spin 0.7s linear infinite;
+    }
+}
+
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans:
+        "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
+        "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+
+    /* Brand scale: change these to re-skin the whole site. */
+    --color-brand-50: #eff5ff;
+    --color-brand-100: #dbe8ff;
+    --color-brand-200: #bcd4ff;
+    --color-brand-300: #93b8f5;
+    --color-brand-400: #679be7;
+    --color-brand-500: #3d85f7;
+    --color-brand-600: #176bff;
+    --color-brand-700: #0f54c9;
+    --color-brand-800: #093e92;
+    --color-brand-900: #062a66;
+    --color-brand-950: #041b44;
+
+    /* Semantic colors: pages and components use only these names. */
+    --color-primary: var(--color-brand-600);
+    --color-primary-hover: var(--color-brand-700);
+    --color-primary-soft: var(--color-brand-50);
+    --color-primary-soft-hover: var(--color-brand-100);
+    --color-on-primary-soft: var(--color-brand-800);
+    --color-on-primary: #ffffff;
+
+    --color-header: var(--color-brand-800);
+    --color-on-header: #ffffff;
+
+    --color-accent: #f59e0b;
+
+    --color-canvas: #f3f5f9;
+    --color-surface: #ffffff;
+    --color-ink: #0f1b2d;
+    --color-muted: #475467;
+    --color-subtle: #667085;
+    --color-line: #e3e8ef;
+
+    /* Shape and depth. */
+    --radius-card: 1rem;
+    --radius-control: 0.75rem;
+    --shadow-card:
+        0 1px 2px rgb(16 24 40 / 0.04), 0 4px 16px rgb(16 24 40 / 0.06);
 }

@@ -1,11 +1,11 @@
 <x-layouts.site title="E-mail confirmado" :noindex="true">
     <div class="mx-auto w-full max-w-md px-4 py-12">
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 text-center shadow-sm">
+        <div class="rounded-card bg-surface p-6 text-center shadow-card">
             <h1 class="text-2xl font-semibold">
                 {{ $alreadyVerified ? 'E-mail já confirmado' : 'E-mail confirmado!' }}
             </h1>
 
-            <p class="mt-3 text-sm text-zinc-600">
+            <p class="mt-3 text-sm text-muted">
                 @if ($alreadyVerified)
                     Este e-mail já tinha sido confirmado antes. Sua conta está ativa.
                 @else

@@ -1,20 +1,20 @@
 <x-layouts.site title="Criar conta" :noindex="true">
     <div class="mx-auto w-full max-w-md px-4 py-12">
         <h1 class="text-2xl font-semibold">Criar conta</h1>
-        <p class="mt-1 text-sm text-zinc-600">
+        <p class="mt-1 text-sm text-muted">
             Já tem conta?
-            <a href="{{ route('login') }}" class="font-medium text-amber-700 underline">Entrar</a>
+            <a href="{{ route('login') }}" class="font-medium text-primary underline">Entrar</a>
         </p>
 
         <x-auth.google-button label="Cadastrar com o Google" class="mt-6" />
 
-        <div class="my-5 flex items-center gap-3 text-xs text-zinc-500">
-            <span class="h-px flex-1 bg-zinc-200"></span>
+        <div class="my-5 flex items-center gap-3 text-xs text-subtle">
+            <span class="h-px flex-1 bg-line"></span>
             ou cadastre com e-mail
-            <span class="h-px flex-1 bg-zinc-200"></span>
+            <span class="h-px flex-1 bg-line"></span>
         </div>
 
-        <form method="POST" action="{{ route('register') }}" class="space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('register') }}" class="space-y-6 rounded-card bg-surface p-6 shadow-card">
             @csrf
 
             <x-ui.input name="name" label="Nome" autocomplete="name" required autofocus />

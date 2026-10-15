@@ -6,7 +6,8 @@
 ])
 
 <div>
-    <label for="{{ $name }}" class="block text-sm font-medium text-zinc-700">{{ $label }}</label>
+    {{-- The label sits close to its field; the form spacing separates the fields. --}}
+    <label for="{{ $name }}" class="mb-1.5 block text-sm font-medium text-ink">{{ $label }}</label>
 
     <input
         id="{{ $name }}"
@@ -14,16 +15,16 @@
         type="{{ $type }}"
         @if ($type !== 'password') value="{{ old($name, $attributes->get('value')) }}" @endif
         {{ $attributes->except('value')->merge([
-            'class' => 'mt-1 block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 '
-                . ($errors->has($name) ? 'border-red-500' : 'border-zinc-300'),
+            'class' => 'block min-h-12 w-full rounded-control border bg-surface px-3.5 py-2 text-base text-ink shadow-sm placeholder:text-subtle focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 '
+                . ($errors->has($name) ? 'border-red-500' : 'border-line'),
         ]) }}
     >
 
     @if ($hint && ! $errors->has($name))
-        <p class="mt-1 text-xs text-zinc-500">{{ $hint }}</p>
+        <p class="mt-1.5 text-xs text-subtle">{{ $hint }}</p>
     @endif
 
     @error($name)
-        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+        <p class="mt-1.5 text-sm text-red-600">{{ $message }}</p>
     @enderror
 </div>

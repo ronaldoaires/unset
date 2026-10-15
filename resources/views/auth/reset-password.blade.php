@@ -2,7 +2,7 @@
     <div class="mx-auto w-full max-w-md px-4 py-12">
         <h1 class="text-2xl font-semibold">Criar nova senha</h1>
 
-        <form method="POST" action="{{ route('password.store') }}" class="mt-6 space-y-4 rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+        <form method="POST" action="{{ route('password.store') }}" class="mt-6 space-y-6 rounded-card bg-surface p-6 shadow-card">
             @csrf
 
             <input type="hidden" name="token" value="{{ $token }}">

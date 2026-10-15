@@ -1,9 +1,9 @@
 <x-layouts.site title="Link inválido ou expirado" :noindex="true">
     <div class="mx-auto w-full max-w-md px-4 py-12">
-        <div class="rounded-lg border border-zinc-200 bg-white p-6 shadow-sm">
+        <div class="rounded-card bg-surface p-6 shadow-card">
             <h1 class="text-center text-2xl font-semibold">Link inválido ou expirado</h1>
 
-            <p class="mt-3 text-center text-sm text-zinc-600">
+            <p class="mt-3 text-center text-sm text-muted">
                 Este link de ativação não é mais válido. Informe o e-mail do seu cadastro para receber um novo.
             </p>
 
