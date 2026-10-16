@@ -9,7 +9,7 @@
         <x-site.breadcrumb :items="$breadcrumbs" />
 
         <h1 class="mt-4 text-3xl font-bold leading-tight tracking-tight text-ink">Famílias Revit</h1>
-        <p class="mt-2 max-w-prose leading-relaxed text-muted">
+        <p class="mt-2 leading-relaxed text-muted">
             Biblioteca de famílias Revit (.rfa) gratuitas e premium, prontas para usar nos seus projetos.
         </p>
 

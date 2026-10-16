@@ -75,7 +75,7 @@
     @endif
 @else
     <p class="mt-6 text-sm text-muted">
-        {{ number_format($families->total(), 0, ',', '.') }}
+        <span class="hidden">{{ number_format($families->total(), 0, ',', '.') }}</span>
         {{ $families->total() === 1 ? 'família encontrada' : 'famílias encontradas' }}
     </p>
 

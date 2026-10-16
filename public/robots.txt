@@ -1,3 +1,5 @@
 User-agent: *
 Disallow: /admin
-Disallow: /familias/*/baixar
+Disallow: /revit/familias/*/baixar
+
+Sitemap: https://unset.com.br/sitemap.xml
