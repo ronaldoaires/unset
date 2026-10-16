@@ -3,73 +3,34 @@
 namespace App\Http\Controllers\Site\Revit;
 
 use App\Http\Controllers\Controller;
-use App\Models\Brand;
-use App\Models\Category;
 use App\Models\Family;
+use App\Services\FamilyListingService;
+use App\Support\StructuredData;
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 
 class FamilyController extends Controller
 {
-    private const PER_PAGE = 12;
-
-    private const DEFAULT_SORT = 'recentes';
-
-    /** Allowed values of the "ordenar" query parameter. */
-    private const SORTS = ['recentes', 'baixados', 'visualizados', 'nome'];
-
-    public function index(Request $request): View
+    public function index(Request $request, FamilyListingService $listing): View
     {
-        // Filters are read leniently: invalid values are ignored instead of
-        // raising an error, so a shared or mistyped URL always opens.
-        $term     = Str::limit($this->stringParam($request, 'q'), 100, '');
-        $category = $this->stringParam($request, 'categoria');
-        $brand    = $this->stringParam($request, 'marca');
-        $sort     = $this->stringParam($request, 'ordenar');
-        $sort     = in_array($sort, self::SORTS, true) ? $sort : self::DEFAULT_SORT;
-        $freeOnly = $request->boolean('gratuita');
+        $data     = $listing->build($request);
+        $families = $data['families'];
+        $url      = route('revit.families.index');
 
-        $query = Family::published()
-            // Relations used by the card, loaded up front (lazy loading is blocked outside production).
-            ->with(['category', 'brand', 'thumbnail', 'primaryImage'])
-            ->when($term !== '', fn(Builder $query) => $query->search($term))
-            ->when($category !== '', fn(Builder $query) => $query->whereHas(
-                'category',
-                fn(Builder $categoryQuery) => $categoryQuery->where('slug', $category),
-            ))
-            ->when($brand !== '', fn(Builder $query) => $query->whereHas(
-                'brand',
-                fn(Builder $brandQuery) => $brandQuery->where('slug', $brand),
-            ))
-            ->when($freeOnly, fn(Builder $query) => $query->free());
-
-        $this->applySort($query, $sort);
-
-        $families = $query
-            ->paginate(self::PER_PAGE, pageName: 'pagina')
-            ->withQueryString();
-
-        $hasFilters = $term !== '' || $category !== '' || $brand !== '' || $freeOnly || $sort !== self::DEFAULT_SORT;
+        $breadcrumbs = [
+            ['name' => 'Início', 'url' => route('home')],
+            ['name' => 'Famílias Revit'],
+        ];
 
         return view('site.revit.families.index', [
-            'families'   => $families,
-            'categories' => Category::active()->whereHas('publishedFamilies')->get(['id', 'name', 'slug']),
-            // Only brands that have at least one published family are offered.
-            'brands'     => Brand::active()->whereHas('publishedFamilies')->get(['id', 'name', 'slug']),
-            'filters'    => [
-                'q'         => $term,
-                'categoria' => $category,
-                'marca'     => $brand,
-                'gratuita'  => $freeOnly,
-                'ordenar'   => $sort,
-            ],
-            'hasFilters' => $hasFilters,
-            // Filtered pages are noindex in the view; paginated pages canonicalize to themselves.
-            'canonical'  => route(
-                'revit.families.index',
-                $families->currentPage() > 1 ? ['pagina' => $families->currentPage()] : [],
+            ...$data,
+            'categories'  => $listing->categoryOptions(),
+            'brands'      => $listing->brandOptions(),
+            'breadcrumbs' => $breadcrumbs,
+            'canonical'   => $listing->canonical($url, $families),
+            'jsonLd'      => StructuredData::graph(
+                StructuredData::breadcrumbs($breadcrumbs),
+                StructuredData::collectionPage('Famílias Revit', $url, null, $families),
             ),
         ]);
     }
@@ -82,29 +43,39 @@ class FamilyController extends Controller
 
         $family->incrementViews();
 
-        return view('site.revit.families.show', ['family' => $family]);
-    }
+        $breadcrumbs = [
+            ['name' => 'Início', 'url' => route('home')],
+            ['name' => 'Famílias Revit', 'url' => route('revit.families.index')],
+        ];
 
-    private function applySort(Builder $query, string $sort): void
-    {
-        match ($sort) {
-            'baixados'     => $query->orderByDesc('download_count'),
-            'visualizados' => $query->orderByDesc('view_count'),
-            'nome'         => $query->orderBy('name'),
-            default        => $query->orderByDesc('created_at'),
-        };
+        // Inactive categories and subcategories have no public page, so they are not linked.
+        if ($family->category) {
+            $breadcrumbs[] = [
+                'name' => $family->category->name,
+                'url'  => $family->category->is_active
+                    ? route('revit.categories.show', ['category' => $family->category->slug])
+                    : null,
+            ];
 
-        // Tie-breaker keeps pagination stable when values repeat.
-        $query->orderByDesc('id');
-    }
+            if ($family->subcategory) {
+                $breadcrumbs[] = [
+                    'name' => $family->subcategory->name,
+                    'url'  => $family->category->is_active && $family->subcategory->is_active
+                        ? route('revit.subcategories.show', [
+                            'category'    => $family->category->slug,
+                            'subcategory' => $family->subcategory->slug,
+                        ])
+                        : null,
+                ];
+            }
+        }
 
-    /**
-     * Query-string value as a trimmed string; arrays (?q[]=x) become an empty string.
-     */
-    private function stringParam(Request $request, string $key): string
-    {
-        $value = $request->query($key);
+        $breadcrumbs[] = ['name' => $family->name];
 
-        return is_string($value) ? trim($value) : '';
+        return view('site.revit.families.show', [
+            'family'      => $family,
+            'breadcrumbs' => $breadcrumbs,
+            'jsonLd'      => StructuredData::graph(StructuredData::breadcrumbs($breadcrumbs)),
+        ]);
     }
 }

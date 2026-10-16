@@ -11,7 +11,7 @@
 /* Tailwind v4 resets buttons to the default cursor: restore the pointer. */
 @layer base {
     button:not(:disabled),
-    [role='button']:not(:disabled) {
+    [role="button"]:not(:disabled) {
         cursor: pointer;
     }
 }
@@ -30,7 +30,7 @@
 
     /* Spinner as the first flex item of the button, in the text color. */
     button[data-loading]::before {
-        content: '';
+        content: "";
         flex: none;
         width: 1rem;
         height: 1rem;
@@ -71,6 +71,9 @@
     --color-on-header: #ffffff;
 
     --color-accent: #f59e0b;
+
+    --color-success: #15803d;
+    --color-success-soft: #dcfce7;
 
     --color-canvas: #f3f5f9;
     --color-surface: #ffffff;
