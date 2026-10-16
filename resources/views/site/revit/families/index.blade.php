@@ -21,23 +21,30 @@
 
         {{-- GET form: every filter lives in the URL, so any result can be copied and shared. --}}
         <form method="GET" action="{{ route('revit.families.index') }}" class="mt-6 rounded-card bg-surface p-4 shadow-card sm:p-6">
-            <div class="grid gap-4 md:grid-cols-4">
-                <div class="md:col-span-2">
-                    <x-ui.input name="q" label="Buscar" type="search" :value="$filters['q']" placeholder="Ex: porta, mesa, pilar" />
+            <div class="space-y-4">
+                <x-ui.input name="q" label="Buscar" type="search" :value="$filters['q']" placeholder="Ex: porta, mesa, pilar" />
+
+                <div class="grid gap-4 md:grid-cols-3">
+                    <x-ui.select name="categoria" label="Categoria">
+                        <option value="" @selected($filters['categoria'] === '')>Todas as categorias</option>
+                        @foreach ($categories as $category)
+                            <option value="{{ $category->slug }}" @selected($filters['categoria'] === $category->slug)>{{ $category->name }}</option>
+                        @endforeach
+                    </x-ui.select>
+
+                    <x-ui.select name="marca" label="Marca">
+                        <option value="" @selected($filters['marca'] === '')>Todas as marcas</option>
+                        @foreach ($brands as $brand)
+                            <option value="{{ $brand->slug }}" @selected($filters['marca'] === $brand->slug)>{{ $brand->name }}</option>
+                        @endforeach
+                    </x-ui.select>
+
+                    <x-ui.select name="ordenar" label="Ordenar por">
+                        @foreach ($sortLabels as $value => $label)
+                            <option value="{{ $value }}" @selected($filters['ordenar'] === $value)>{{ $label }}</option>
+                        @endforeach
+                    </x-ui.select>
                 </div>
-
-                <x-ui.select name="categoria" label="Categoria">
-                    <option value="" @selected($filters['categoria'] === '')>Todas as categorias</option>
-                    @foreach ($categories as $category)
-                        <option value="{{ $category->slug }}" @selected($filters['categoria'] === $category->slug)>{{ $category->name }}</option>
-                    @endforeach
-                </x-ui.select>
-
-                <x-ui.select name="ordenar" label="Ordenar por">
-                    @foreach ($sortLabels as $value => $label)
-                        <option value="{{ $value }}" @selected($filters['ordenar'] === $value)>{{ $label }}</option>
-                    @endforeach
-                </x-ui.select>
             </div>
 
             <div class="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

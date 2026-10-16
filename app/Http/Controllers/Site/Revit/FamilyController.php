@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Site\Revit;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Family;
 use Illuminate\Contracts\View\View;
@@ -25,6 +26,7 @@ class FamilyController extends Controller
         // raising an error, so a shared or mistyped URL always opens.
         $term     = Str::limit($this->stringParam($request, 'q'), 100, '');
         $category = $this->stringParam($request, 'categoria');
+        $brand    = $this->stringParam($request, 'marca');
         $sort     = $this->stringParam($request, 'ordenar');
         $sort     = in_array($sort, self::SORTS, true) ? $sort : self::DEFAULT_SORT;
         $freeOnly = $request->boolean('gratuita');
@@ -32,12 +34,16 @@ class FamilyController extends Controller
         $query = Family::published()
             // Relations used by the card, loaded up front (lazy loading is blocked outside production).
             ->with(['category', 'brand', 'thumbnail', 'primaryImage'])
-            ->when($term !== '', fn (Builder $query) => $query->search($term))
-            ->when($category !== '', fn (Builder $query) => $query->whereHas(
+            ->when($term !== '', fn(Builder $query) => $query->search($term))
+            ->when($category !== '', fn(Builder $query) => $query->whereHas(
                 'category',
-                fn (Builder $categoryQuery) => $categoryQuery->where('slug', $category),
+                fn(Builder $categoryQuery) => $categoryQuery->where('slug', $category),
             ))
-            ->when($freeOnly, fn (Builder $query) => $query->free());
+            ->when($brand !== '', fn(Builder $query) => $query->whereHas(
+                'brand',
+                fn(Builder $brandQuery) => $brandQuery->where('slug', $brand),
+            ))
+            ->when($freeOnly, fn(Builder $query) => $query->free());
 
         $this->applySort($query, $sort);
 
@@ -45,14 +51,17 @@ class FamilyController extends Controller
             ->paginate(self::PER_PAGE, pageName: 'pagina')
             ->withQueryString();
 
-        $hasFilters = $term !== '' || $category !== '' || $freeOnly || $sort !== self::DEFAULT_SORT;
+        $hasFilters = $term !== '' || $category !== '' || $brand !== '' || $freeOnly || $sort !== self::DEFAULT_SORT;
 
         return view('site.revit.families.index', [
             'families'   => $families,
             'categories' => Category::active()->whereHas('publishedFamilies')->get(['id', 'name', 'slug']),
+            // Only brands that have at least one published family are offered.
+            'brands'     => Brand::active()->whereHas('publishedFamilies')->get(['id', 'name', 'slug']),
             'filters'    => [
                 'q'         => $term,
                 'categoria' => $category,
+                'marca'     => $brand,
                 'gratuita'  => $freeOnly,
                 'ordenar'   => $sort,
             ],
