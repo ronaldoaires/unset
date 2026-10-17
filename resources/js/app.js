@@ -35,3 +35,28 @@ window.addEventListener('pageshow', (event) => {
         button.disabled = false;
     });
 });
+
+// Brazilian phone mask for inputs marked with data-mask="phone".
+// Landline: (99) 9999-9999. Mobile: (99) 99999-9999.
+document.addEventListener('input', (event) => {
+    const input = event.target;
+
+    if (! (input instanceof HTMLInputElement) || input.dataset.mask !== 'phone') {
+        return;
+    }
+
+    const digits = input.value.replace(/\D/g, '').slice(0, 11);
+
+    if (digits.length > 10) {
+        input.value = digits.replace(/^(\d{2})(\d{5})(\d{0,4}).*/, '($1) $2-$3');
+    } else if (digits.length > 6) {
+        input.value = digits.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, '($1) $2-$3');
+    } else if (digits.length > 2) {
+        input.value = digits.replace(/^(\d{2})(\d{0,5}).*/, '($1) $2');
+    } else if (digits.length > 0) {
+        // No closing parenthesis yet, so backspace keeps working at this point.
+        input.value = '(' + digits;
+    } else {
+        input.value = '';
+    }
+});
