@@ -35,7 +35,7 @@ return [
         [
             'label' => 'Conta',
             'items' => [
-                ['label' => 'Encerrar conta', 'route' => 'account.danger', 'icon' => 'shield-exclamation', 'enabled' => false, 'danger' => true],
+                ['label' => 'Encerrar conta', 'route' => 'account.danger', 'icon' => 'shield-exclamation', 'enabled' => true, 'danger' => true],
             ],
         ],
     ],

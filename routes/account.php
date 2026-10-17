@@ -9,6 +9,7 @@ use App\Http\Controllers\Account\AvatarController;
 use App\Http\Controllers\Account\FavoriteController;
 use App\Http\Controllers\Account\DownloadController;
 use App\Http\Controllers\Account\SubscriptionController;
+use App\Http\Controllers\Account\DangerController;
 
 // The "/conta" prefix and the "account." name prefix come from routes/web.php.
 
@@ -39,3 +40,9 @@ Route::get('/favoritos', [FavoriteController::class, 'index'])->name('favorites'
 Route::get('/downloads', [DownloadController::class, 'index'])->name('downloads');
 
 Route::get('/assinatura', [SubscriptionController::class, 'index'])->name('subscription');
+
+Route::get('/encerrar', [DangerController::class, 'edit'])->name('danger');
+Route::post('/encerrar', [DangerController::class, 'store'])
+    ->middleware('throttle:5,10')
+    ->name('danger.store');
+Route::delete('/encerrar', [DangerController::class, 'destroy'])->name('danger.cancel');

@@ -38,6 +38,9 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         self::ROLE_SUPERADMIN,
     ];
 
+    // Days between a deletion request and the permanent closing of the account.
+    const DELETION_GRACE_DAYS = 30;
+
     protected $fillable = [
         'name',
         'email',
@@ -286,7 +289,18 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function scopePendingDeletion($query)
     {
         return $query->whereNotNull('delete_requested_at')
-            ->where('delete_requested_at', '>', now()->subDays(30));
+            ->where('delete_requested_at', '>', now()->subDays(self::DELETION_GRACE_DAYS));
+    }
+
+    /**
+     * Accounts whose grace period is over. Anonymized accounts have no e-mail
+     * anymore, which is how they are told apart from the ones still to process.
+     */
+    public function scopeDueForDeletion($query)
+    {
+        return $query->whereNotNull('delete_requested_at')
+            ->where('delete_requested_at', '<=', now()->subDays(self::DELETION_GRACE_DAYS))
+            ->whereNotNull('email');
     }
 
     /**
