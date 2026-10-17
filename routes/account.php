@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Account\PasswordController;
 use App\Http\Controllers\Account\EmailController;
 use App\Http\Controllers\Account\AvatarController;
+use App\Http\Controllers\Account\FavoriteController;
 
 // The "/conta" prefix and the "account." name prefix come from routes/web.php.
 
@@ -30,3 +31,5 @@ Route::post('/avatar', [AvatarController::class, 'update'])
     ->middleware('throttle:10,1')
     ->name('avatar.update');
 Route::delete('/avatar', [AvatarController::class, 'destroy'])->name('avatar.destroy');
+
+Route::get('/favoritos', [FavoriteController::class, 'index'])->name('favorites');

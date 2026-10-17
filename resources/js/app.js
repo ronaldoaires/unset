@@ -126,3 +126,57 @@ document.addEventListener('change', (event) => {
     // The <img> starts hidden when the user has no photo yet.
     preview.classList.remove('hidden');
 });
+
+// Heart (favorite) buttons: toggles without reloading the page. The form also
+// works with JavaScript off. If anything goes wrong here (expired session,
+// unverified e-mail, network), the form is submitted normally, so the usual
+// redirects (login, e-mail verification) take over.
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (! (form instanceof HTMLFormElement) || ! form.hasAttribute('data-favorite-form')) {
+        return;
+    }
+
+    event.preventDefault();
+
+    const button = form.querySelector('button');
+    const method = form.querySelector('input[name="_method"]');
+
+    if (! button || button.disabled) {
+        return;
+    }
+
+    button.disabled = true;
+
+    fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form), // carries _token and, when removing, _method=DELETE
+        credentials: 'same-origin',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    })
+        .then(async (response) => {
+            if (! response.ok) {
+                throw new Error('Request failed: ' + response.status);
+            }
+
+            const { favorited } = await response.json();
+
+            button.setAttribute('aria-pressed', favorited ? 'true' : 'false');
+
+            if (button.dataset.labelOn) {
+                button.setAttribute('aria-label', favorited ? button.dataset.labelOn : button.dataset.labelOff);
+            }
+
+            // A disabled input is not sent: next time the form adds or removes accordingly.
+            if (method) {
+                method.disabled = ! favorited;
+            }
+
+            button.disabled = false;
+        })
+        .catch(() => {
+            // form.submit() does not fire the submit event again, so there is no loop.
+            form.submit();
+        });
+});

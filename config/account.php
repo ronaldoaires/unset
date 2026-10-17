@@ -28,7 +28,7 @@ return [
             'label' => 'Conteúdo',
             'items' => [
                 ['label' => 'Downloads',  'route' => 'account.downloads',    'icon' => 'arrow-down-tray', 'enabled' => false],
-                ['label' => 'Favoritos',  'route' => 'account.favorites',    'icon' => 'heart',           'enabled' => false],
+                ['label' => 'Favoritos',  'route' => 'account.favorites',    'icon' => 'heart',           'enabled' => true],
                 ['label' => 'Assinatura', 'route' => 'account.subscription', 'icon' => 'credit-card',     'enabled' => false],
             ],
         ],

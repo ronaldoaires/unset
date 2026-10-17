@@ -56,6 +56,9 @@
                     @endif
                     @endauth
                 </div>
+                <div class="mt-3">
+                    <x-site.revit.favorite-button :family="$family" labeled />
+                </div>
             </div>
         </div>
 

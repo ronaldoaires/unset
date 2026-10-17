@@ -38,14 +38,13 @@ class PlanForm
 
     /**
      * Keys stored in features.permissions. Only for account interactions
-     * that differ between plans. Favorites and ratings may end up open to
-     * every logged-in user instead (see the note on User::hasAccess()).
+     * that differ between plans. Favorites are open to every verified user,
+     * so they are not a plan permission.
      */
     protected static function permissionOptions(): array
     {
         return [
-            'can_favorite' => 'Favoritar famílias',
-            'can_rate'     => 'Avaliar famílias',
+            'can_rate' => 'Avaliar famílias',
         ];
     }
 

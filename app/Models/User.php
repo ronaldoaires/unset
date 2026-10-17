@@ -157,6 +157,25 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return $usedFamilyIds->count() < $limit;
     }
 
+    /**
+     * Memoized per request: a page with many cards (each with a heart button)
+     * costs a single query instead of one per card.
+     */
+    protected ?array $favoriteIdsCache = null;
+
+    /**
+     * Ids of the families this user has favorited.
+     *
+     * @return array<int, int>
+     */
+    public function favoriteFamilyIds(): array
+    {
+        return $this->favoriteIdsCache ??= $this->favorites()
+            ->pluck('family_id')
+            ->map(fn($id) => (int) $id)
+            ->all();
+    }
+
     // ─── Role checks ──────────────────────────────────────────────────
 
     /**
