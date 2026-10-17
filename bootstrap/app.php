@@ -8,8 +8,8 @@ use Illuminate\Routing\Exceptions\InvalidSignatureException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
-        web: __DIR__.'/../routes/web.php',
-        commands: __DIR__.'/../routes/console.php',
+        web: __DIR__ . '/../routes/web.php',
+        commands: __DIR__ . '/../routes/console.php',
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
@@ -17,7 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*'),
+            fn(Request $request) => $request->is('api/*'),
         );
 
         // Expired or tampered verification links get a friendly page instead of
@@ -25,6 +25,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(function (InvalidSignatureException $e, Request $request) {
             if ($request->routeIs('verification.verify')) {
                 return response()->view('auth.verification-failed', [], 403);
+            }
+
+            if ($request->routeIs('email-change.*')) {
+                return response()->view('auth.email-change-result', [
+                    'ok'      => false,
+                    'title'   => 'Link inválido ou expirado',
+                    'message' => 'Este link não é mais válido. Faça um novo pedido de troca de e-mail na sua conta.',
+                ], 403);
             }
         });
     })->create();

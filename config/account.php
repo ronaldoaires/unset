@@ -20,7 +20,7 @@ return [
                 ['label' => 'Início',  'route' => 'account.index',    'icon' => 'home',        'enabled' => true],
                 ['label' => 'Perfil',  'route' => 'account.profile',  'icon' => 'user',        'enabled' => true],
                 ['label' => 'Senha',   'route' => 'account.password', 'icon' => 'lock-closed', 'enabled' => true],
-                ['label' => 'E-mail',  'route' => 'account.email',    'icon' => 'at-symbol',   'enabled' => false],
+                ['label' => 'E-mail',  'route' => 'account.email',    'icon' => 'at-symbol',   'enabled' => true],
                 ['label' => 'Avatar',  'route' => 'account.avatar',   'icon' => 'photo',       'enabled' => false],
             ],
         ],

@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialLoginController;
+use App\Http\Controllers\Auth\EmailChangeController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/cadastro', [RegisterController::class, 'create'])->name('register');
@@ -42,6 +43,17 @@ Route::get('/verificar-email/{id}/{hash}', [EmailVerificationController::class, 
     ->whereNumber('id')
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
+
+// Links of the e-mail change flow also have to work without a session.
+Route::get('/alterar-email/confirmar/{id}/{hash}', [EmailChangeController::class, 'confirm'])
+    ->whereNumber('id')
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('email-change.confirm');
+
+Route::get('/alterar-email/cancelar/{id}/{hash}', [EmailChangeController::class, 'cancel'])
+    ->whereNumber('id')
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('email-change.cancel');
 
 // Public on purpose: someone blocked at login cannot be authenticated yet.
 // The controller always answers with the same message and limits sends per address.
