@@ -55,7 +55,7 @@
                     @if ($access->allowed())
                     <x-ui.button :href="route('revit.families.download', ['family' => $family->slug])" size="lg" class="w-full">Baixar família</x-ui.button>
                     @else
-                    <p class="rounded-control bg-canvas p-3 text-sm text-muted">{{ $access->message() }}</p>
+                                        <x-ui.alert>{{ $access->message() }}</x-ui.alert>
                     @endif
                     @endauth
                 </div>

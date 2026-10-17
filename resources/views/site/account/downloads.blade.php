@@ -55,14 +55,14 @@
                         </p>
                     </div>
 
-                    <div class="sm:w-52 sm:shrink-0">
+                    <div class="sm:w-64 sm:shrink-0">
                         @if ($access->allowed())
                             <x-ui.button :href="route('revit.families.download', ['family' => $family->slug])" class="w-full">
                                 @svg('heroicon-o-arrow-down-tray', 'size-4')
                                 Baixar novamente
                             </x-ui.button>
                         @else
-                            <p class="rounded-control bg-canvas p-3 text-xs text-muted">{{ $access->message() }}</p>
+                            <x-ui.alert>{{ $access->message() }}</x-ui.alert>
                         @endif
                     </div>
                 </li>

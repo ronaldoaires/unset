@@ -174,6 +174,27 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
+     * Download quota of the current month, or null without an active subscription.
+     * Needs "activeSubscription.plan" loaded (lazy loading is blocked outside production).
+     *
+     * @return array{limit: ?int, used: int, resets_at: \Illuminate\Support\Carbon}|null
+     */
+    public function monthlyQuota(): ?array
+    {
+        $plan = $this->activeSubscription?->plan;
+
+        if (! $plan) {
+            return null;
+        }
+
+        return [
+            'limit'     => $plan->max_downloads_per_month, // null = unlimited
+            'used'      => $this->monthlyQuotaFamilyIds()->count(),
+            'resets_at' => now()->addMonthNoOverflow()->startOfMonth(),
+        ];
+    }
+
+    /**
      * Memoized per request: a page with many cards (each with a heart button)
      * costs a single query instead of one per card.
      */

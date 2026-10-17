@@ -24,13 +24,7 @@ class SubscriptionController extends Controller
         $subscription = $user->activeSubscription
             ?? $user->subscriptions()->with('plan')->latest('started_at')->latest('id')->first();
 
-        $quota = $hasAccess
-            ? [
-                'limit'     => $subscription->plan->max_downloads_per_month, // null = unlimited
-                'used'      => $user->monthlyQuotaFamilyIds()->count(),
-                'resets_at' => now()->addMonthNoOverflow()->startOfMonth(),
-            ]
-            : null;
+        $quota = $user->monthlyQuota();
 
         // The fragment brings the page back to the right section after a page change.
         $payments = SubscriptionPayment::query()
