@@ -60,3 +60,69 @@ document.addEventListener('input', (event) => {
         input.value = '';
     }
 });
+
+// Image preview for inputs with data-image-preview="<img id>".
+// Optional attributes:
+//   data-max-kb       refuses a bigger file right away, before any upload.
+//   data-error-target id of an element where the refusal message is shown.
+document.addEventListener('change', (event) => {
+    const input = event.target;
+
+    if (! (input instanceof HTMLInputElement) || ! input.dataset.imagePreview) {
+        return;
+    }
+
+    const errorBox = input.dataset.errorTarget
+        ? document.getElementById(input.dataset.errorTarget)
+        : null;
+
+    const showError = (message) => {
+        if (! errorBox) {
+            return;
+        }
+
+        errorBox.textContent = message ?? '';
+        errorBox.classList.toggle('hidden', ! message);
+    };
+
+    // A new selection always starts without the previous message.
+    showError(null);
+
+    const file = input.files?.[0];
+
+    if (! file) {
+        return;
+    }
+
+    if (! file.type.startsWith('image/')) {
+        input.value = '';
+        showError('O arquivo precisa ser uma imagem JPG, PNG ou WebP.');
+
+        return;
+    }
+
+    const maxKb = Number(input.dataset.maxKb || 0);
+
+    if (maxKb && file.size > maxKb * 1024) {
+        const limit = maxKb >= 1024 ? (maxKb / 1024) + ' MB' : maxKb + ' KB';
+        const size  = (file.size / 1024 / 1024).toFixed(1).replace('.', ',');
+
+        input.value = '';
+        showError('A imagem escolhida tem ' + size + ' MB. O máximo permitido é ' + limit + '.');
+
+        return;
+    }
+
+    const preview = document.getElementById(input.dataset.imagePreview);
+
+    if (! preview) {
+        return;
+    }
+
+    const url = URL.createObjectURL(file);
+
+    preview.onload = () => URL.revokeObjectURL(url);
+    preview.src = url;
+    // The <img> starts hidden when the user has no photo yet.
+    preview.classList.remove('hidden');
+});

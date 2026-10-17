@@ -11,7 +11,7 @@
 {{-- <details> keeps the menu working without any JavaScript. --}}
 <details class="relative">
     <summary class="flex min-h-12 cursor-pointer list-none items-center gap-2 rounded-control px-3 text-sm font-medium hover:bg-on-header/10 [&::-webkit-details-marker]:hidden">
-        @svg('heroicon-o-user-circle', 'size-6')
+        <x-ui.avatar :user="auth()->user()" class="size-8 text-xs" />
         <span class="hidden sm:inline">{{ \Illuminate\Support\Str::before(auth()->user()->name, ' ') }}</span>
     </summary>
 

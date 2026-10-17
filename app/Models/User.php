@@ -12,6 +12,8 @@ use App\Traits\HasPremium;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
@@ -182,21 +184,54 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     // ─── Accessor ───────────────────────────────────────────────────
 
     /**
-     * Avatar URL with a name-generated fallback.
+     * URL of the profile picture, or null when the user has none (views show
+     * the initials instead). An external URL is returned as-is (legacy or
+     * Google picture); an uploaded file is served through the public disk.
      * Usage: $user->avatar_url
      */
     protected function avatarUrl(): Attribute
     {
         return Attribute::make(
             get: function () {
-                if ($this->avatar) {
-                    return $this->avatar;
+                if (blank($this->avatar)) {
+                    return null;
                 }
 
-                $name = urlencode($this->name);
-                return "https://ui-avatars.com/api/?name={$name}&background=random";
+                return $this->hasUploadedAvatar()
+                    ? Storage::disk('public')->url($this->avatar)
+                    : $this->avatar;
             }
         );
+    }
+
+    /**
+     * First letter of the first and last names, e.g. "Maria da Silva" -> "MS".
+     * Usage: $user->initials
+     */
+    protected function initials(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $words = preg_split('/\s+/u', trim((string) $this->name), -1, PREG_SPLIT_NO_EMPTY);
+
+                if (! $words) {
+                    return '?';
+                }
+
+                $first = mb_substr($words[0], 0, 1);
+                $last  = count($words) > 1 ? mb_substr(end($words), 0, 1) : '';
+
+                return mb_strtoupper($first . $last);
+            }
+        );
+    }
+
+    /**
+     * True when the avatar is a file stored by the app (not an external URL).
+     */
+    public function hasUploadedAvatar(): bool
+    {
+        return filled($this->avatar) && ! Str::startsWith($this->avatar, ['http://', 'https://']);
     }
 
     // ─── Scopes ─────────────────────────────────────────────────────

@@ -43,6 +43,35 @@ class ImageService
         return $path;
     }
 
+    /**
+     * Crops the image to a centered square, converts it to webp and stores it
+     * as "{directory}/{baseName}-{random}.webp". The random suffix gives every
+     * upload a new URL, so browsers never show a stale cached copy. The old
+     * file is only removed after the new one is safely stored.
+     */
+    public function storeSquare(
+        mixed $file,
+        string $baseName,
+        int $size = 256,
+        string $directory = 'avatars',
+        string $disk = 'public',
+        ?string $oldPath = null
+    ): string {
+        $path = $directory . '/' . Str::slug($baseName) . '-' . Str::lower(Str::random(8)) . '.webp';
+
+        $encoded = Image::decode($file)
+            ->cover($size, $size)
+            ->encode(new WebpEncoder(quality: 80));
+
+        Storage::disk($disk)->put($path, $encoded);
+
+        if ($oldPath) {
+            $this->deleteImageAndThumb($oldPath, $disk);
+        }
+
+        return $path;
+    }
+
     public function generateThumb(
         string $path,
         string $disk = 'public',
