@@ -119,7 +119,7 @@ default => 'Família exclusiva para assinantes. Assine um plano para baixar.',
             </p>
             <p class="mt-1 text-xs font-semibold text-primary">Grátis com assinatura</p>
             @else
-            <span class="inline-flex w-fit items-center gap-1.5 text-xs font-bold text-amber-500">
+            <span class="inline-flex w-fit items-center gap-1.5 text-xs font-bold text-amber-600">
                 <x-icons.crown class="size-4" />
                 Só para assinantes
             </span>
