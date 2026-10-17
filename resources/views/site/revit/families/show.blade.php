@@ -33,6 +33,9 @@
                 @endif
 
                 <div class="mt-4 flex flex-wrap gap-2">
+                    @unless ($family->is_free)
+                    <x-ui.premium-badge />
+                    @endunless
                     <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-on-primary-soft">Revit {{ $family->revit_version }}</span>
                     @if ($family->is_parametric)
                     <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-on-primary-soft">Paramétrica</span>

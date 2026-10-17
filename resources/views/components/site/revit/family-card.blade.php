@@ -1,9 +1,23 @@
 @props(['family'])
 
+@php
+$isPremium = ! $family->is_free;
+$hasPrice = ($family->price ?? 0) > 0;
+// The relation stays cached on the user, so a page full of cards costs one query.
+$subscriber = auth()->check() && auth()->user()->activeSubscription !== null;
+
+$premiumTip = match (true) {
+$subscriber => 'Esta família está incluída no seu plano.',
+$hasPrice => 'Família premium: assine um plano ou compre avulsa por R$ ' . number_format($family->price, 2, ',', '.') . '.',
+default => 'Família exclusiva para assinantes. Assine um plano para baixar.',
+};
+@endphp
+
 {{-- The whole card is clickable through the stretched ".card-link" on the title.
      Hover effects follow that link only, so hovering the category/brand chips
      (which sit above it) does not trigger the card's own hover state. --}}
-<article class="group/card relative flex flex-col overflow-hidden rounded-card bg-surface shadow-card transition has-[.card-link:hover]:-translate-y-0.5 has-[.card-link:hover]:shadow-lg">
+<article @class([ 'group/card relative flex flex-col overflow-hidden rounded-card bg-surface shadow-card transition has-[.card-link:hover]:-translate-y-0.5 has-[.card-link:hover]:shadow-lg' , 'ring-1 ring-brand-200'=> $isPremium,
+    ])>
     {{-- Fixed ratio box: the image is absolutely positioned so its natural
          size can never stretch the box (portrait and landscape look the same). --}}
     <div class="relative aspect-[4/3] overflow-hidden bg-canvas">
@@ -20,9 +34,29 @@
             @svg('heroicon-o-cube', 'size-10')
         </span>
         @endif
+
         {{-- Above the stretched title link (z-10), so it never opens the family. --}}
         <x-site.revit.favorite-button :family="$family" class="absolute right-2 top-2 z-10" />
     </div>
+
+    @if ($isPremium)
+    {{-- Premium badge + tooltip. The tooltip is a sibling of the badge (peer), laid out
+             against the card instead of the badge, so it never overflows the card edges.
+             tabindex lets keyboard and touch users open it too. --}}
+    <div
+        tabindex="0"
+        aria-describedby="premium-tip-{{ $family->id }}"
+        class="peer absolute left-2 top-2 z-10 cursor-help rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+        <x-ui.premium-badge />
+    </div>
+
+    <span
+        id="premium-tip-{{ $family->id }}"
+        role="tooltip"
+        class="pointer-events-none absolute inset-x-2 top-12 z-20 hidden rounded-control bg-canvas/95 p-2.5 text-xs leading-snug text-ink shadow-card ring-1 ring-line peer-hover:block peer-focus:block">
+        {{ $premiumTip }}
+    </span>
+    @endif
 
     <div class="flex flex-1 flex-col gap-3 p-3 sm:p-4">
         <div>
@@ -73,15 +107,21 @@
             <span class="inline-flex w-fit items-center rounded-full bg-success-soft px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-success">
                 Grátis
             </span>
-            @elseif (($family->price ?? 0) > 0)
+            @elseif ($subscriber)
+            <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-on-primary-soft">
+                @svg('heroicon-s-check-circle', 'size-4')
+                Incluso no seu plano
+            </span>
+            @elseif ($hasPrice)
             <p class="text-xl font-bold leading-none text-ink">
                 <span class="text-xs font-semibold text-subtle">R$</span>
                 {{ number_format($family->price, 2, ',', '.') }}
             </p>
-            <p class="mt-1 text-xs font-medium text-primary">ou incluso no plano</p>
+            <p class="mt-1 text-xs font-semibold text-primary">Grátis com assinatura</p>
             @else
-            <span class="inline-flex w-fit items-center rounded-full bg-primary-soft px-2.5 py-1 text-xs font-bold text-on-primary-soft">
-                Incluso no plano
+            <span class="inline-flex w-fit items-center gap-1.5 text-xs font-bold text-amber-500">
+                <x-icons.crown class="size-4" />
+                Só para assinantes
             </span>
             @endif
         </div>
