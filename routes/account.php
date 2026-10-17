@@ -7,6 +7,7 @@ use App\Http\Controllers\Account\PasswordController;
 use App\Http\Controllers\Account\EmailController;
 use App\Http\Controllers\Account\AvatarController;
 use App\Http\Controllers\Account\FavoriteController;
+use App\Http\Controllers\Account\DownloadController;
 
 // The "/conta" prefix and the "account." name prefix come from routes/web.php.
 
@@ -33,3 +34,5 @@ Route::post('/avatar', [AvatarController::class, 'update'])
 Route::delete('/avatar', [AvatarController::class, 'destroy'])->name('avatar.destroy');
 
 Route::get('/favoritos', [FavoriteController::class, 'index'])->name('favorites');
+
+Route::get('/downloads', [DownloadController::class, 'index'])->name('downloads');
