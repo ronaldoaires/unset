@@ -29,7 +29,7 @@ return [
             'items' => [
                 ['label' => 'Downloads',  'route' => 'account.downloads',    'icon' => 'arrow-down-tray', 'enabled' => true],
                 ['label' => 'Favoritos',  'route' => 'account.favorites',    'icon' => 'heart',           'enabled' => true],
-                ['label' => 'Assinatura', 'route' => 'account.subscription', 'icon' => 'credit-card',     'enabled' => false],
+                ['label' => 'Assinatura', 'route' => 'account.subscription', 'icon' => 'credit-card',     'enabled' => true],
             ],
         ],
         [

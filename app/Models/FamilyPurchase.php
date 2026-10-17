@@ -36,4 +36,40 @@ class FamilyPurchase extends Model
     {
         return $this->status === 'paid' && $this->paid_at !== null;
     }
+
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            'paid'      => 'Pago',
+            'pending'   => 'Pendente',
+            'refunded'  => 'Estornado',
+            'failed'    => 'Falhou',
+            'cancelled' => 'Cancelado',
+            default     => ucfirst((string) $this->status),
+        };
+    }
+
+    /**
+     * Tone of the status badge in the account area (see x-ui.badge).
+     */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            'paid'     => 'success',
+            'pending'  => 'warning',
+            'refunded' => 'info',
+            'failed'   => 'danger',
+            default    => 'neutral',
+        };
+    }
+
+    public function paymentMethodLabel(): string
+    {
+        return match ($this->payment_method) {
+            'credit_card' => 'Cartão de crédito',
+            'debit_card'  => 'Cartão de débito',
+            'pix'         => 'Pix',
+            default       => $this->payment_method ?? '—',
+        };
+    }
 }

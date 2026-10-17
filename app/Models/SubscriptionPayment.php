@@ -65,6 +65,9 @@ class SubscriptionPayment extends Model
         };
     }
 
+    /**
+     * Label for the payment method, shown in the UI.
+     */
     public function paymentMethodLabel(): string
     {
         return match ($this->payment_method) {
@@ -72,6 +75,20 @@ class SubscriptionPayment extends Model
             'debit_card'  => 'Cartão de débito',
             'pix'         => 'Pix',
             default       => $this->payment_method ?? '—',
+        };
+    }
+
+    /**
+     * Tone of the status badge in the account area (see x-ui.badge).
+     */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            'approved' => 'success',
+            'pending'  => 'warning',
+            'rejected' => 'danger',
+            'refunded' => 'info',
+            default    => 'neutral',
         };
     }
 }

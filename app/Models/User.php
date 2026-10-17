@@ -14,6 +14,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
@@ -123,6 +124,23 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     }
 
     /**
+     * Ids of the paid families that count against this month's quota: free
+     * ones and purchased ones never use it. Shared by the download rule and
+     * the account page, so both always agree.
+     *
+     * @return Collection<int, int>
+     */
+    public function monthlyQuotaFamilyIds(): Collection
+    {
+        return $this->downloads()
+            ->where('downloaded_at', '>=', now()->startOfMonth())
+            ->whereHas('family', fn($query) => $query->where('is_free', false))
+            ->whereNotIn('family_id', $this->purchasedFamilyIds())
+            ->pluck('family_id')
+            ->unique();
+    }
+
+    /**
      * Whether the subscription still has download quota this month.
      * Only paid families count: free ones and purchased ones never use the
      * quota, and downloading the same family again in the month is free.
@@ -143,12 +161,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
             return true;
         }
 
-        $usedFamilyIds = $this->downloads()
-            ->where('downloaded_at', '>=', now()->startOfMonth())
-            ->whereHas('family', fn($query) => $query->where('is_free', false))
-            ->whereNotIn('family_id', $this->purchasedFamilyIds())
-            ->pluck('family_id')
-            ->unique();
+        $usedFamilyIds = $this->monthlyQuotaFamilyIds();
 
         if ($family && $usedFamilyIds->contains($family->id)) {
             return true;

@@ -177,4 +177,41 @@ class Subscription extends Model
             default    => 'zinc',
         };
     }
+
+    /**
+     * Tone of the status badge in the account area (see x-ui.badge).
+     */
+    public function statusTone(): string
+    {
+        return match ($this->status) {
+            'active'   => 'success',
+            'trial'    => 'info',
+            'canceled' => 'danger',
+            'past_due' => 'warning',
+            default    => 'neutral',
+        };
+    }
+
+    /**
+     * One-line explanation of the current situation, shown under the plan name.
+     */
+    public function statusMessage(): ?string
+    {
+        return match ($this->status) {
+            'active'   => $this->renews_at
+                ? 'Próxima renovação em ' . $this->renews_at->format('d/m/Y') . '.'
+                : null,
+            'trial'    => $this->trial_ends_at
+                ? 'Período de teste grátis até ' . $this->trial_ends_at->format('d/m/Y') . '.'
+                : null,
+            'canceled' => $this->expires_at?->isFuture()
+                ? 'Assinatura cancelada. Você mantém os benefícios até ' . $this->expires_at->format('d/m/Y') . '.'
+                : 'Assinatura cancelada. Os benefícios foram encerrados.',
+            'past_due' => 'Não conseguimos confirmar o último pagamento. Regularize para voltar a usar os benefícios do plano.',
+            'expired'  => $this->expires_at
+                ? 'Assinatura expirada em ' . $this->expires_at->format('d/m/Y') . '.'
+                : 'Assinatura expirada.',
+            default    => null,
+        };
+    }
 }

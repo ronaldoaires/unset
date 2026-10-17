@@ -145,6 +145,42 @@ class Plan extends Model
         return $this->max_downloads_per_month . '/mês';
     }
 
+    /**
+     * Short list of what the plan includes, for the account page.
+     *
+     * @return array<int, string>
+     */
+    public function benefits(): array
+    {
+        $benefits = [
+            is_null($this->max_downloads_per_month)
+                ? 'Downloads ilimitados de famílias pagas'
+                : 'Até ' . $this->max_downloads_per_month . ' downloads de famílias pagas por mês',
+        ];
+
+        if ($this->hasModule('architectural')) {
+            $benefits[] = 'Módulo Arquitetônico';
+        }
+
+        if ($this->hasModule('structural')) {
+            $benefits[] = 'Módulo Estrutural';
+        }
+
+        if ($this->has_priority_support) {
+            $benefits[] = 'Suporte prioritário';
+        }
+
+        if ($this->has_exclusive_content) {
+            $benefits[] = 'Conteúdo exclusivo';
+        }
+
+        if ($this->has_api_access) {
+            $benefits[] = 'Acesso à API';
+        }
+
+        return $benefits;
+    }
+
     // ── Modules and permissions ──────────────────────────────
 
     /**
