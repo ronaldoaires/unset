@@ -7,6 +7,8 @@ use App\Models\SubscriptionPayment;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use App\Notifications\PaymentFailedNotification;
+use Throwable;
 
 /**
  * Turns Mercado Pago data into local subscription state. Safe to run many
@@ -46,6 +48,7 @@ class SubscriptionSyncService
         // A canceled or expired subscription is never brought back by a late event.
         $final = in_array($subscription->status, ['canceled', 'expired'], true);
         $status = $mp['status'] ?? null;
+        $becamePastDue = false;
 
         if (! $final && $status === 'authorized') {
             $onTrial = ($subscription->plan?->trial_days ?? 0) > 0 && $subscription->last_payment_at === null;
@@ -61,6 +64,9 @@ class SubscriptionSyncService
                     ?? now()->addDays($subscription->plan->trial_days);
             }
         } elseif (! $final && $status === 'paused') {
+            // Notify only on the transition: a rejected charge may already have made it past due.
+            $becamePastDue = in_array($subscription->status, ['active', 'trial'], true);
+
             $attributes['status'] = 'past_due';
         } elseif (! $final && $status === 'cancelled') {
             if ($subscription->status === 'pending') {
@@ -80,6 +86,10 @@ class SubscriptionSyncService
         }
 
         $subscription->update($attributes);
+
+        if ($becamePastDue) {
+            $this->notifyPastDue($subscription);
+        }
 
         return $subscription;
     }
@@ -140,6 +150,26 @@ class SubscriptionSyncService
             $this->syncPreapproval($this->mp->getPreapproval($subscription->mp_preapproval_id));
         } elseif ($status === 'rejected' && in_array($subscription->status, ['active', 'trial'], true)) {
             $subscription->update(['status' => 'past_due']);
+
+            $this->notifyPastDue($subscription);
+        }
+    }
+
+    /**
+     * E-mails the customer that the charge failed. Callers only invoke it on
+     * the active/trial -> past_due transition, so retried webhooks never send
+     * it twice. A mail failure must not break the webhook: the status is
+     * already saved, so a retry would not send it anyway.
+     */
+    private function notifyPastDue(Subscription $subscription): void
+    {
+        // Lazy loading is blocked outside production.
+        $subscription->loadMissing(['user', 'plan']);
+
+        try {
+            $subscription->user->notify(new PaymentFailedNotification($subscription->plan->name));
+        } catch (Throwable $e) {
+            report($e);
         }
     }
 
