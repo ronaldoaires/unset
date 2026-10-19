@@ -62,6 +62,7 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'remember_token',
         'pending_email_token',
         'cpf',
+        'cpf_hash',
     ];
 
     protected $casts = [
@@ -71,7 +72,27 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'is_active'           => 'boolean',
         'password'            => 'hashed',
         'delete_requested_at' => 'datetime',
+        'cpf'                 => 'encrypted',
+        'terms_accepted_at'   => 'datetime',
     ];
+
+    protected static function booted(): void
+    {
+        // Keeps the searchable hash in sync with the encrypted CPF, including when it is cleared.
+        static::saving(function (User $user) {
+            if ($user->isDirty('cpf')) {
+                $user->cpf_hash = filled($user->cpf) ? static::hashCpf($user->cpf) : null;
+            }
+        });
+    }
+
+    /**
+     * Keyed hash of the CPF digits, used to detect duplicates without decrypting anything.
+     */
+    public static function hashCpf(string $digits): string
+    {
+        return hash_hmac('sha256', $digits, (string) config('app.key'));
+    }
 
     // ─── Relationships ──────────────────────────────────────────────
     // NOTE: subscriptions() and activeSubscription() live in the

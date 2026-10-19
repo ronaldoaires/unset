@@ -33,10 +33,16 @@
 
         {{-- Shown only when the last attempt was blocked because the e-mail is not confirmed --}}
         @if (session('unverified_email'))
-            <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <p class="text-sm text-amber-900">Não recebeu o e-mail de ativação? Confira o spam ou peça um novo.</p>
-                <x-auth.resend-verification :email="session('unverified_email')" class="mt-3" />
-            </div>
+        <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <p class="text-sm text-amber-900">Não recebeu o e-mail de ativação? Confira o spam ou peça um novo.</p>
+            <x-auth.resend-verification :email="session('unverified_email')" class="mt-3" />
+        </div>
         @endif
+
+        <p class="mt-3 text-sm text-muted text-center">
+            Não tem conta?
+            <a href="{{ route('register') }}" class="font-medium text-primary underline">Cadastre-se</a>
+        </p>
+
     </div>
 </x-layouts.site>

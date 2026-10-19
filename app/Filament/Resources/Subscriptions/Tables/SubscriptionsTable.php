@@ -21,6 +21,7 @@ class SubscriptionsTable
             'canceled' => 'Cancelada',
             'past_due' => 'Pagamento pendente',
             'expired'  => 'Expirada',
+            'pending' => 'Aguardando pagamento'
         ];
     }
 

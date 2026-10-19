@@ -159,6 +159,7 @@ class Subscription extends Model
             'canceled' => 'Cancelada',
             'past_due' => 'Pagamento pendente',
             'expired'  => 'Expirada',
+            'pending'  => 'Aguardando pagamento',
             default    => ucfirst($this->status),
         };
     }
@@ -188,6 +189,7 @@ class Subscription extends Model
             'trial'    => 'info',
             'canceled' => 'danger',
             'past_due' => 'warning',
+            'pending'  => 'warning',
             default    => 'neutral',
         };
     }
@@ -211,7 +213,18 @@ class Subscription extends Model
             'expired'  => $this->expires_at
                 ? 'Assinatura expirada em ' . $this->expires_at->format('d/m/Y') . '.'
                 : 'Assinatura expirada.',
+            'pending'  => 'Estamos aguardando a confirmação do pagamento.',
             default    => null,
         };
+    }
+
+    /**
+     * Whether the customer can cancel it from the account page: it must still
+     * be running and have a Mercado Pago subscription to cancel.
+     */
+    public function canBeCanceled(): bool
+    {
+        return in_array($this->status, ['active', 'trial', 'past_due'], true)
+            && filled($this->mp_preapproval_id);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Site;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Contracts\View\View;
+use App\Models\Plan;
 
 class HomeController extends Controller
 {
@@ -25,6 +26,9 @@ class HomeController extends Controller
             ],
         ];
 
-        return view('site.home', ['jsonLd' => $jsonLd]);
+        return view('site.home', [
+            'jsonLd' => $jsonLd,
+            'plans'  => Plan::active()->ordered()->get(),
+        ]);
     }
 }

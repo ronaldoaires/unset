@@ -159,11 +159,12 @@ class Plan extends Model
         ];
 
         if ($this->hasModule('architectural')) {
-            $benefits[] = 'Módulo Arquitetônico';
+            $benefits[] = 'Downloads ilimitados de famílias gratuitas';
+            $benefits[] = 'Módulo Arquitetônico no plugin';
         }
 
         if ($this->hasModule('structural')) {
-            $benefits[] = 'Módulo Estrutural';
+            $benefits[] = 'Módulo Estrutural no plugin';
         }
 
         if ($this->has_priority_support) {

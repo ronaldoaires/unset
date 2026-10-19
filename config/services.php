@@ -40,5 +40,9 @@ return [
         // Relative URIs are expanded to the app URL by Socialite.
         'redirect'      => '/entrar/google/retorno',
     ],
+    'mercadopago' => [
+        'access_token'   => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
+    ],
 
 ];

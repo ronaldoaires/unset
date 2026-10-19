@@ -46,3 +46,7 @@ Route::post('/encerrar', [DangerController::class, 'store'])
     ->middleware('throttle:5,10')
     ->name('danger.store');
 Route::delete('/encerrar', [DangerController::class, 'destroy'])->name('danger.cancel');
+
+Route::delete('/assinatura', [SubscriptionController::class, 'cancel'])
+    ->middleware('throttle:5,10')
+    ->name('subscription.cancel');

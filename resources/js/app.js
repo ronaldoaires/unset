@@ -180,3 +180,19 @@ document.addEventListener('submit', (event) => {
             form.submit();
         });
 });
+
+// CPF mask for inputs marked with data-mask="cpf": 999.999.999-99.
+document.addEventListener('input', (event) => {
+    const input = event.target;
+
+    if (! (input instanceof HTMLInputElement) || input.dataset.mask !== 'cpf') {
+        return;
+    }
+
+    const digits = input.value.replace(/\D/g, '').slice(0, 11);
+
+    input.value = digits
+        .replace(/^(\d{3})(\d)/, '$1.$2')
+        .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
+});

@@ -23,6 +23,8 @@ class SitemapService
         $entries = [];
 
         $entries[] = ['loc' => route('home'), 'lastmod' => null];
+        $entries[] = ['loc' => route('legal.terms'), 'lastmod' => null];
+        $entries[] = ['loc' => route('legal.privacy'), 'lastmod' => null];
 
         $entries[] = [
             'loc'     => route('revit.families.index'),
