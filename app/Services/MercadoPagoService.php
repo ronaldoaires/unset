@@ -8,6 +8,8 @@ use App\Models\User;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use App\Models\Family;
+use App\Models\FamilyPurchase;
 
 /**
  * Thin wrapper over the Mercado Pago REST API (no SDK).
@@ -57,6 +59,38 @@ class MercadoPagoService
             'auto_recurring'     => $autoRecurring,
             'back_url'           => route('checkout.finish'),
             'status'             => 'pending',
+        ])->throw()->json();
+    }
+
+    /**
+     * Creates a Checkout Pro preference for a one-off family purchase.
+     * The answer carries the init_point where the customer pays (Pix or card).
+     */
+    public function createPreference(FamilyPurchase $purchase, User $user, Family $family): array
+    {
+        // See createSubscription(): some hosts serialize floats with 17 digits.
+        ini_set('serialize_precision', '-1');
+
+        $returnUrl = route('revit.purchases.finish', ['purchase' => $purchase->id]);
+
+        return $this->client()->post('/checkout/preferences', [
+            'items' => [[
+                'id'          => (string) $family->id,
+                'title'       => $family->name,
+                'quantity'    => 1,
+                'currency_id' => 'BRL',
+                'unit_price'  => round((float) $family->price, 2),
+            ]],
+            'payer'              => ['email' => $user->email],
+            // The prefix tells purchase payments apart from subscription ones in the webhook.
+            'external_reference' => 'purchase-' . $purchase->id,
+            'back_urls'          => [
+                'success' => $returnUrl,
+                'pending' => $returnUrl,
+                'failure' => $returnUrl,
+            ],
+            'auto_return'        => 'approved',
+            'notification_url'   => route('webhooks.mercadopago'),
         ])->throw()->json();
     }
 

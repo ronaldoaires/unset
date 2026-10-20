@@ -9,11 +9,16 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
+use App\Services\PurchaseSyncService;
 
 class MercadoPagoWebhookController extends Controller
 {
-    public function __invoke(Request $request, MercadoPagoService $mp, SubscriptionSyncService $sync): Response
-    {
+    public function __invoke(
+        Request $request,
+        MercadoPagoService $mp,
+        SubscriptionSyncService $sync,
+        PurchaseSyncService $purchases,
+    ): Response {
         abort_unless($mp->hasValidSignature($request), 401);
 
         $id   = $mp->notificationId($request);
@@ -27,6 +32,7 @@ class MercadoPagoWebhookController extends Controller
             match ($type) {
                 'subscription_preapproval'        => $sync->syncPreapproval($mp->getPreapproval($id)),
                 'subscription_authorized_payment' => $sync->syncAuthorizedPayment($mp->getAuthorizedPayment($id)),
+                'payment'                         => $purchases->syncPayment($mp->getPayment($id)),
                 default                           => null,
             };
         } catch (RequestException $e) {

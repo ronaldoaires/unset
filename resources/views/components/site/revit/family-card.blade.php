@@ -20,7 +20,7 @@ default => 'Família exclusiva para assinantes. Assine um plano para baixar.',
     ])>
     {{-- Fixed ratio box: the image is absolutely positioned so its natural
          size can never stretch the box (portrait and landscape look the same). --}}
-    <div class="relative aspect-[4/3] overflow-hidden bg-canvas">
+    <div class="relative aspect-[4/3] overflow-hidden bg-white">
         @if ($family->thumbnail_url)
         <img
             src="{{ $family->thumbnail_url }}"

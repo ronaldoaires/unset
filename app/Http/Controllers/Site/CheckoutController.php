@@ -95,8 +95,6 @@ class CheckoutController extends Controller
 
         $user->forceFill($attributes)->save();
 
-        $user->forceFill($attributes)->save();
-
         $cycle = $this->cycle($request, $plan);
 
         // Abandoned attempts are canceled at Mercado Pago, so they can never be authorized later.

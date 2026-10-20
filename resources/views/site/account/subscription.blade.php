@@ -173,40 +173,10 @@ $money = fn ($value) => 'R$ ' . number_format((float) $value, 2, ',', '.');
             @endif
         </section>
 
-        {{-- One-off purchases --}}
-        <section id="compras" class="rounded-card bg-surface p-6 shadow-card">
-            <h2 class="text-lg font-semibold text-ink">Compras avulsas</h2>
-
-            @if ($purchases->isEmpty())
-            <p class="mt-3 text-sm text-muted">Você ainda não comprou nenhuma família avulsa.</p>
-            @else
-            <ul class="mt-2 divide-y divide-line">
-                @foreach ($purchases as $purchase)
-                <li class="flex items-center justify-between gap-4 py-3">
-                    <div class="min-w-0">
-                        <p class="truncate text-sm font-medium text-ink">
-                            @if ($purchase->family?->isPublished())
-                            <a href="{{ route('revit.families.show', ['family' => $purchase->family->slug]) }}" class="hover:underline">{{ $purchase->family->name }}</a>
-                            @else
-                            {{ $purchase->family?->name ?? 'Família removida' }}
-                            @endif
-                        </p>
-                        <p class="text-xs text-subtle">
-                            {{ ($purchase->paid_at ?? $purchase->created_at)->format('d/m/Y H:i') }}
-                            · {{ $purchase->paymentMethodLabel() }}
-                        </p>
-                    </div>
-
-                    <div class="flex shrink-0 flex-col items-end gap-1">
-                        <span class="text-sm font-semibold text-ink">{{ $money($purchase->amount) }}</span>
-                        <x-ui.badge :tone="$purchase->statusTone()">{{ $purchase->statusLabel() }}</x-ui.badge>
-                    </div>
-                </li>
-                @endforeach
-            </ul>
-
-            {{ $purchases->links('site.pagination') }}
-            @endif
-        </section>
+        {{-- One-off purchases live on their own page --}}
+        <p class="text-sm text-muted">
+            Compras avulsas de famílias ficam em
+            <a href="{{ route('account.purchases') }}" class="font-medium text-primary underline">Compras</a>.
+        </p>
     </div>
 </x-layouts.account>

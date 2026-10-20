@@ -51,17 +51,9 @@ class SubscriptionController extends Controller
             ->withQueryString()
             ->fragment('pagamentos');
 
-        $purchases = $user->familyPurchases()
-            ->with('family')
-            ->latest()
-            ->orderByDesc('id')
-            ->paginate(self::PER_PAGE, pageName: 'compras')
-            ->withQueryString()
-            ->fragment('compras');
-
         $cancelReasons = self::CANCEL_REASONS;
 
-        return view('site.account.subscription', compact('subscription', 'hasAccess', 'quota', 'payments', 'purchases', 'cancelReasons'));
+        return view('site.account.subscription', compact('subscription', 'hasAccess', 'quota', 'payments', 'cancelReasons'));
     }
 
     public function cancel(Request $request, MercadoPagoService $mp, SubscriptionSyncService $sync): RedirectResponse

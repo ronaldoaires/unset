@@ -7,16 +7,18 @@
         <x-site.breadcrumb :items="$breadcrumbs" />
 
         <div class="mt-4 grid gap-6 lg:grid-cols-5">
-            <div class="overflow-hidden rounded-card bg-surface shadow-card lg:col-span-3">
+            <div class="overflow-hidden rounded-card bg-surface shadow-card lg:col-span-2">
                 @if ($family->image_url)
-                <img
-                    src="{{ $family->image_url }}"
-                    alt="{{ $family->name }} - família Revit"
-                    class="aspect-[4/3] w-full object-cover">
+                <div class="flex items-center justify-center bg-white">
+                    <img
+                        src="{{ $family->image_url }}"
+                        alt="{{ $family->name }} - família Revit"
+                        class="aspect-[4/3] w-full object-contain p-4">
+                </div>
                 @endif
             </div>
 
-            <div class="rounded-card bg-surface p-6 shadow-card lg:col-span-2">
+            <div class="rounded-card bg-surface p-6 shadow-card lg:col-span-3">
                 <h1 class="text-2xl font-bold leading-tight tracking-tight text-ink">{{ $family->name }}</h1>
 
                 {{-- Inactive brands have no public page, so they are shown as plain text. --}}
@@ -36,13 +38,14 @@
                     @unless ($family->is_free)
                     <x-ui.premium-badge />
                     @endunless
-                    <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-on-primary-soft">Revit {{ $family->revit_version }}</span>
+                    <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-on-primary-soft">Revit {{ $family->revit_version }}+</span>
                     @if ($family->is_parametric)
                     <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-on-primary-soft">Paramétrica</span>
                     @endif
                 </div>
 
                 <p class="mt-6 text-2xl font-bold text-ink">{{ $family->formatted_price }}</p>
+                <p class="mt-1 text-xs font-semibold text-primary">Grátis com assinatura</p>
 
                 <div class="mt-6">
                     @guest
@@ -53,9 +56,23 @@
                     @php($access = \Illuminate\Support\Facades\Gate::inspect('download', $family))
 
                     @if ($access->allowed())
-                    <x-ui.button :href="route('revit.families.download', ['family' => $family->slug])" size="lg" class="w-full">Baixar família</x-ui.button>
+                    <x-ui.button :href="route('revit.families.download', ['family' => $family->slug])" size="lg" class="w-full">
+                        @svg('heroicon-o-arrow-down-tray', 'size-6')
+                        Baixar família
+                    </x-ui.button>
                     @else
-                                        <x-ui.alert>{{ $access->message() }}</x-ui.alert>
+                    <x-ui.alert>{{ $access->message() }}</x-ui.alert>
+
+                    @if (($family->price ?? 0) > 0)
+                    <x-ui.button
+                        :href="route('revit.families.purchase.show', ['family' => $family->slug])"
+                        variant="tonal"
+                        size="lg"
+                        class="mt-3 w-full">
+                        Comprar por R$ {{ number_format($family->price, 2, ',', '.') }}
+                    </x-ui.button>
+                    
+                    @endif
                     @endif
                     @endauth
                 </div>
@@ -68,15 +85,7 @@
         @if ($family->description)
         <section class="mt-6 rounded-card bg-surface p-6 shadow-card">
             <h2 class="text-lg font-semibold text-ink">Sobre esta família</h2>
-            <p class="mt-2 max-w-prose whitespace-pre-line leading-relaxed text-muted">{{ $family->description }}</p>
-
-            @if (count($family->tag_list))
-            <div class="mt-4 flex flex-wrap gap-2">
-                @foreach ($family->tag_list as $tag)
-                <span class="rounded-full bg-canvas px-3 py-1 text-xs font-medium text-muted">{{ $tag }}</span>
-                @endforeach
-            </div>
-            @endif
+            <p class="mt-2 whitespace-pre-line leading-relaxed text-muted">{{ $family->description }}</p>
         </section>
         @endif
     </div>
