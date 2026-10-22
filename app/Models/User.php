@@ -15,9 +15,11 @@ use Filament\Panel;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Collection;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
+    use HasFactory;
     use HasPremium;
     use HasApiTokens, Notifiable;
 

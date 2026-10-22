@@ -50,7 +50,9 @@ return [
     |
     */
 
-    'expiration' => null,
+    // Minutes until an issued token expires (30 days by default). The plugin
+    // keeps the session until then; after that the user signs in again.
+    'expiration' => (int) env('SANCTUM_EXPIRATION', 60 * 24 * 30),
 
     /*
     |--------------------------------------------------------------------------

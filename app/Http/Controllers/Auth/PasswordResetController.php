@@ -54,6 +54,9 @@ class PasswordResetController extends Controller
                     'password'       => $password, // hashed by the model cast
                     'remember_token' => Str::random(60),
                 ])->save();
+                
+                // A reset means the old credentials may be compromised: revoke API tokens.
+                $user->tokens()->delete();
 
                 // Opening the e-mailed link proves the user owns the address.
                 if (! $user->hasVerifiedEmail()) {

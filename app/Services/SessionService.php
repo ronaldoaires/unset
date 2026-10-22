@@ -25,6 +25,9 @@ class SessionService
                 ->delete();
         }
 
+        // API tokens (Revit plugin, future apps) are signed out too.
+        $user->tokens()->delete();
+
         $user->forceFill(['remember_token' => Str::random(60)])->save();
     }
 }
