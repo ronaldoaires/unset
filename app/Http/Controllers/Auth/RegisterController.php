@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Rules\NotDisposableEmail;
 use App\Rules\PersonName;
-use App\Rules\Turnstile;
 use App\Services\UnverifiedAccountPruner;
 use App\Support\BotTrap;
 use Illuminate\Auth\Events\Registered;
@@ -16,7 +15,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\ValidationException;
 
 class RegisterController extends Controller
 {
@@ -29,17 +27,10 @@ class RegisterController extends Controller
     {
         $email = Str::lower(trim((string) $request->input('email')));
 
-        // Honeypot filled: only bots do that. Answer as if it worked, so the
-        // bot learns nothing, but create nothing and send no e-mail.
-        if (BotTrap::honeypotFilled($request)) {
+        // Honeypot filled (bot): answer as if it worked, but create nothing
+        // and send no e-mail. Too fast or Turnstile refused: validation error.
+        if (! BotTrap::verify($request)) {
             return redirect()->route('register.done')->with('registered_email', $email);
-        }
-
-        // Too fast (or no form token): ask again. A real person just resubmits.
-        if (! BotTrap::slowEnough($request)) {
-            throw ValidationException::withMessages([
-                'email' => 'Não foi possível concluir o cadastro. Confira os dados e envie novamente.',
-            ]);
         }
 
         $request->merge([
@@ -62,10 +53,8 @@ class RegisterController extends Controller
                 'unique:users,email',
             ],
             'password' => ['required', 'confirmed', Password::defaults()],
-            'cf-turnstile-response' => [Rule::requiredIf(Turnstile::enabled()), new Turnstile()],
         ], [
             'email.regex'                    => 'Use um e-mail válido, sem caracteres especiais antes do @.',
-            'cf-turnstile-response.required' => 'Confirme que você não é um robô.',
         ]);
 
         // No scheduler on the hosting: abandoned sign-ups are cleaned up here.

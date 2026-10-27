@@ -121,3 +121,15 @@ function attachRfaFile(Family $family): Family
 
     return $family;
 }
+
+/**
+ * Form token of a public form rendered 10 seconds ago (passes the time trap).
+ */
+function formToken(): string
+{
+    test()->travel(-10)->seconds();
+    $token = \App\Support\BotTrap::token();
+    test()->travelBack();
+
+    return $token;
+}

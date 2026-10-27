@@ -7,6 +7,7 @@
 
         <form method="POST" action="{{ route('password.email') }}" class="mt-6 space-y-6 rounded-card bg-surface p-6 shadow-card">
             @csrf
+            <x-auth.bot-trap />
 
             <x-ui.input name="email" label="E-mail" type="email" autocomplete="email" required autofocus />
 

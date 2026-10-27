@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\UserSecurity;
+use App\Support\BotTrap;
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -22,11 +23,16 @@ class PasswordResetController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        // Honeypot filled (bot): same answer below, but no e-mail is sent.
+        $human = BotTrap::verify($request);
+
         $request->validate(['email' => ['required', 'email']]);
 
         // The result is ignored on purpose: the same message is shown whether or
         // not the address exists, so the form cannot reveal registered e-mails.
-        Password::sendResetLink($request->only('email'));
+        if ($human) {
+            Password::sendResetLink($request->only('email'));
+        }
 
         return back()->with('status', 'Se este e-mail estiver cadastrado, enviamos um link para redefinir a senha.');
     }

@@ -19,9 +19,7 @@ beforeEach(function () {
  */
 function signUpData(array $overrides = []): array
 {
-    test()->travel(-10)->seconds();
-    $token = BotTrap::token();
-    test()->travelBack();
+    $token = formToken();
 
     return array_merge([
         'name'                  => 'Maria Souza',

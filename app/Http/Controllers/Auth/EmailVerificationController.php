@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\BotTrap;
 use Illuminate\Auth\Events\Verified;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -49,13 +50,16 @@ class EmailVerificationController extends Controller
      */
     public function resend(Request $request): RedirectResponse
     {
+        // Honeypot filled (bot): same answer below, but no e-mail is sent.
+        $human = BotTrap::verify($request);
+
         $email = Str::lower(trim((string) $request->validate([
             'email' => ['required', 'email'],
         ])['email']));
 
         $user = User::where('email', $email)->first();
 
-        if ($user && ! $user->hasVerifiedEmail()) {
+        if ($human && $user && ! $user->hasVerifiedEmail()) {
             // One e-mail per minute per address, on top of the per-IP route throttle.
             RateLimiter::attempt(
                 'verification-resend:' . $email,
