@@ -1,43 +1,10 @@
 <?php
 
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
-
-uses(RefreshDatabase::class);
-
-function makePlan(array $overrides = []): Plan
-{
-    return Plan::create(array_merge([
-        'name'                    => 'Pro',
-        'slug'                    => 'pro',
-        'price_monthly'           => 49.90,
-        'price_yearly'            => 399,
-        'max_downloads_per_month' => 5,
-        'features'                => [
-            'modules'     => ['architectural'],
-            'permissions' => ['can_rate'],
-        ],
-    ], $overrides));
-}
-
-function subscribe(User $user, Plan $plan, string $status = 'active'): Subscription
-{
-    return Subscription::create([
-        'user_id'       => $user->id,
-        'plan_id'       => $plan->id,
-        'billing_cycle' => 'monthly',
-        'status'        => $status,
-        'started_at'    => now(),
-        'renews_at'     => now()->addMonth(),
-    ]);
-}
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    Sanctum::actingAs($this->user);
+    signIn();
 });
 
 it('returns an empty access block for a user without a plan', function () {

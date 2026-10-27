@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\CategoryController;
 use App\Http\Controllers\Api\V1\FamilyController;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\V1\FamilyDownloadController;
 
 // The "/api" prefix comes from bootstrap/app.php; versioning lives here.
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -23,5 +24,9 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
 
         Route::get('families', [FamilyController::class, 'index'])->name('families.index');
         Route::get('families/{family:slug}', [FamilyController::class, 'show'])->name('families.show');
+
+        Route::get('families/{family:slug}/download', FamilyDownloadController::class)
+            ->middleware('throttle:20,1,api-download')
+            ->name('families.download');
     });
 });

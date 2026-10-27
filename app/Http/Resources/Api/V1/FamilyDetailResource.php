@@ -30,6 +30,7 @@ class FamilyDetailResource extends FamilyResource
             ] : null,
             'page_url'       => route('revit.families.show', ['family' => $this->slug]),
             'download'       => [
+                'url'          => route('api.v1.families.download', ['family' => $this->slug]),
                 'allowed'      => $access->allowed(),
                 'message'      => $access->message(),
                 // Purchases happen on the site, never inside the plugin.

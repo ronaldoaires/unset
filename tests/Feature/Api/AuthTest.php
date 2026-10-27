@@ -1,18 +1,6 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-uses(RefreshDatabase::class);
-
-function apiLogin(array $overrides = [])
-{
-    return test()->postJson('/api/v1/auth/login', array_merge([
-        'email'       => 'ana@example.com',
-        'password'    => 'password',
-        'device_name' => 'revit-plugin@PC-01',
-    ], $overrides));
-}
 
 beforeEach(function () {
     // The factory password is "password" and the e-mail comes verified.

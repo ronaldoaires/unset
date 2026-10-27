@@ -1,44 +1,8 @@
 <?php
 
 use App\Models\Brand;
-use App\Models\Category;
 use App\Models\Family;
-use App\Models\Plan;
-use App\Models\Subscription;
 use App\Models\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Laravel\Sanctum\Sanctum;
-
-uses(RefreshDatabase::class);
-
-function signIn(): void
-{
-    Sanctum::actingAs(test()->user);
-}
-
-function makeCategory(string $slug = 'portas', array $overrides = []): Category
-{
-    return Category::firstOrCreate(
-        ['slug' => $slug],
-        array_merge(['name' => ucfirst($slug)], $overrides),
-    );
-}
-
-function makeFamily(array $overrides = []): Family
-{
-    static $n = 0;
-    $n++;
-
-    return Family::create(array_merge([
-        'user_id'       => test()->user->id,
-        'category_id'   => makeCategory()->id,
-        'name'          => "Familia {$n}",
-        'slug'          => "familia-{$n}",
-        'revit_version' => 2025,
-        'is_free'       => true,
-        'status'        => Family::STATUS_PUBLISHED,
-    ], $overrides));
-}
 
 beforeEach(function () {
     $this->user = User::factory()->create();
@@ -144,6 +108,7 @@ it('shows a free family as downloadable', function () {
         ->assertOk()
         ->assertJsonPath('data.name', 'Porta A')
         ->assertJsonPath('data.tags', ['porta pivotante'])
+        ->assertJsonPath('data.download.url', route('api.v1.families.download', ['family' => $family->slug]))
         ->assertJsonPath('data.download.allowed', true)
         ->assertJsonPath('data.download.purchase_url', null);
 });
@@ -161,17 +126,7 @@ it('offers the purchase link for a paid family without access', function () {
 
 it('allows a paid family for an active subscriber', function () {
     signIn();
-
-    $plan = Plan::create(['name' => 'Pro', 'slug' => 'pro', 'price_monthly' => 49.90, 'price_yearly' => 399]);
-
-    Subscription::create([
-        'user_id'       => $this->user->id,
-        'plan_id'       => $plan->id,
-        'billing_cycle' => 'monthly',
-        'status'        => 'active',
-        'started_at'    => now(),
-        'renews_at'     => now()->addMonth(),
-    ]);
+    subscribe($this->user);
 
     $family = makeFamily(['is_free' => false, 'price' => 80]);
 
