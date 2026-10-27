@@ -25,6 +25,8 @@ class FamilyResource extends JsonResource
             'price'           => $this->price !== null ? (float) $this->price : null,
             'formatted_price' => $this->formatted_price,
             'thumbnail_url'   => $this->thumbnail_url,
+            // One query per request: favoriteFamilyIds() is memoized on the user.
+            'is_favorite'     => in_array($this->id, $request->user()?->favoriteFamilyIds() ?? [], true),
         ];
     }
 

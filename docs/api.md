@@ -44,6 +44,10 @@ User-Agent: UnSetBIM-Revit/{plugin version} (Revit {year})
 | GET | `/families` | Bearer | 120/min | Paginated catalog with filters |
 | GET | `/families/{slug}` | Bearer | 120/min | Family detail + download decision |
 | GET | `/families/{slug}/download` | Bearer | 120/min + 20/min | Download the `.rfa` |
+| GET | `/me/favorites` | Bearer | 120/min | The user's favorite families |
+| POST | `/families/{slug}/favorite` | Bearer | 120/min | Add a favorite |
+| DELETE | `/families/{slug}/favorite` | Bearer | 120/min | Remove a favorite |
+| GET | `/me/downloads` | Bearer | 120/min | The user's download history |
 
 Every authenticated endpoint also re-checks that the account is still active
 (see `account_inactive` below).
@@ -92,7 +96,7 @@ The client should store `token` securely (e.g. DPAPI on Windows) together with
 
 | Status | When | Body |
 |---|---|---|
-| 422 | Missing/invalid fields | Validation shape (section 7.2) |
+| 422 | Missing/invalid fields | Validation shape (section 8.2) |
 | 422 | Wrong e-mail or password — including Google-only accounts that have no password | `errors.email[0]` = `"E-mail ou senha incorretos. Se você criou a conta com o Google, defina uma senha em Minha conta > Senha, no site."` |
 | 403 | Correct password, account deactivated | `{"message": "...", "code": "account_inactive"}` |
 | 403 | Correct password, e-mail not verified yet | `{"message": "...", "code": "email_not_verified"}` |
@@ -124,7 +128,7 @@ Use it on plugin start to validate a stored token and refresh the access block.
 Note: `login` returns `user` and `access` side by side; `me` returns them merged
 inside `data`.
 
-**Errors:** 401, 403 `account_inactive`, 429 (section 7).
+**Errors:** 401, 403 `account_inactive`, 429 (section 8).
 
 ### 3.3 `POST /auth/logout`
 
@@ -277,7 +281,8 @@ return **422**.
       "is_free": false,
       "price": 19.9,
       "formatted_price": "R$ 19,90",
-      "thumbnail_url": "https://unset.com.br/storage/families/porta-giro-80x210-thumb.webp"
+      "thumbnail_url": "https://unset.com.br/storage/families/porta-giro-80x210-thumb.webp",
+      "is_favorite": false
     }
   ],
   "links": {
@@ -316,6 +321,7 @@ return **422**.
 | `price` | number \| null | BRL. `null` or `0` on a non-free family = subscribers only (cannot be bought separately) |
 | `formatted_price` | string | `"Gratuito"`, `"Exclusivo para assinantes"` or `"R$ 19,90"` |
 | `thumbnail_url` | string \| null | Thumbnail, falling back to the main image |
+| `is_favorite` | bool | Whether the signed-in user favorited it |
 
 ### 5.4 `GET /families/{slug}`
 
@@ -358,7 +364,7 @@ Everything in the list item, plus:
 | `download.url` | string | Endpoint to call (section 6) |
 | `download.allowed` | bool | Server decision for **this user**, right now |
 | `download.message` | string \| null | Portuguese reason when `allowed` is `false`; `null` when allowed |
-| `download.code` | string \| null | `access_required`, `quota_exceeded`, or `null` when allowed (section 7.4) |
+| `download.code` | string \| null | `access_required`, `quota_exceeded`, or `null` when allowed (section 8.4) |
 | `download.purchase_url` | string \| null | Site page to buy the family; only when not allowed **and** `price > 0`. Purchases never happen inside the plugin — open it in the browser (the API token does not sign the user in on the site, so they may be asked to log in there). |
 
 **Download rule** (same as the site, `FamilyPolicy::download`), in order:
@@ -411,9 +417,67 @@ endpoint, but must still handle 403 (quota can run out between the two calls).
 
 ---
 
-## 7. Errors
+## 7. The user's lists
 
-### 7.1 Shape
+### 7.1 Favorites
+
+Every verified user may favorite families; it is not a plan permission. The
+site and the API share the same list.
+
+#### `POST /families/{slug}/favorite` and `DELETE /families/{slug}/favorite`
+
+No body. Both are **idempotent**: adding an existing favorite or removing a
+missing one is not an error.
+
+**200 OK**
+
+```json
+{ "data": { "slug": "porta-giro-80x210", "is_favorite": true } }
+```
+
+**Errors:** 401, 403 `account_inactive`, 404 (POST: unknown slug or unpublished
+family; DELETE: unknown slug only — unpublished favorites can always be
+removed), 429.
+
+#### `GET /me/favorites`
+
+| Param | Type | Rules |
+|---|---|---|
+| `per_page` | int | 1–50, default 20 |
+| `page` | int | min 1, default 1 |
+
+**200 OK** — paginated like `/families` (section 5.3). Each item is a family
+list item plus:
+
+| Field | Type | Notes |
+|---|---|---|
+| `favorited_at` | datetime | When it was favorited. The list is ordered by it, newest first. |
+
+Unpublished families are hidden but stay saved: they come back if published again.
+
+**Errors:** 401, 403 `account_inactive`, 422 (page parameters), 429.
+
+### 7.2 Download history
+
+#### `GET /me/downloads`
+
+Same page parameters as `/me/favorites`. One item **per family** (not per
+download), most recently downloaded first. Only published families are listed.
+
+**200 OK** — paginated; each item is a family list item plus:
+
+| Field | Type | Notes |
+|---|---|---|
+| `last_downloaded_at` | datetime | Last time this user downloaded it |
+| `downloads_count` | int | How many times this user downloaded it |
+
+**Errors:** 401, 403 `account_inactive`, 422 (page parameters), 429.
+
+---
+
+## 8. Errors
+
+### 8.1 Shape
 
 Every error is JSON with at least `message`. Some carry a machine-readable `code`:
 
@@ -424,7 +488,7 @@ Every error is JSON with at least `message`. Some carry a machine-readable `code
 Clients branch on **HTTP status + `code`** and show `message` to the user.
 Never parse `message` text; it may change.
 
-### 7.2 Validation (422)
+### 8.2 Validation (422)
 
 ```json
 {
@@ -435,7 +499,7 @@ Never parse `message` text; it may change.
 }
 ```
 
-### 7.3 Status reference
+### 8.3 Status reference
 
 | Status | `code` | Meaning | Client action |
 |---|---|---|---|
@@ -451,7 +515,7 @@ Never parse `message` text; it may change.
 | 429 | `too_many_attempts` (login only) or none | Rate limited | Wait `Retry-After` seconds |
 | 5xx | — | Server error | Generic error, allow retry |
 
-### 7.4 Error codes
+### 8.4 Error codes
 
 | Code | Endpoint(s) | Status |
 |---|---|---|
@@ -463,7 +527,7 @@ Never parse `message` text; it may change.
 
 ---
 
-## 8. Recommended client flow (Revit plugin)
+## 9. Recommended client flow (Revit plugin)
 
 1. **Start:** if a token is stored and not past `expires_at`, call `GET /auth/me`.
    200 → update cached user/access. 401/403 → clear token, show login.
@@ -475,7 +539,7 @@ Never parse `message` text; it may change.
 
 ---
 
-## 9. Security model
+## 10. Security model
 
 The API is public in the sense that anyone can reach its URL, like any website.
 What protects it is **who** is calling, not **which program**:
@@ -500,13 +564,12 @@ and `.env.example` lists the variables with empty values. Production must run
 with `APP_ENV=production` and `APP_DEBUG=false` (debug mode puts stack traces in
 JSON errors).
 
-## 10. Versioning
+## 11. Versioning
 
 - Breaking changes go to a new prefix (`/api/v2`); `/api/v1` keeps working until clients migrate.
 - Adding new fields or new endpoints is **not** breaking: clients must ignore unknown fields.
 
-## 11. Planned (not available yet)
+## 12. Planned (not available yet)
 
-- Favorites (list / add / remove) and download history.
 - Plugin update check endpoint.
 - Browser-based login (device authorization flow): the plugin asks for a short code, opens the site, the user approves while signed in there (password or Google) and the plugin receives its token. Covers Google-only accounts without a password, and the password never passes through the plugin.

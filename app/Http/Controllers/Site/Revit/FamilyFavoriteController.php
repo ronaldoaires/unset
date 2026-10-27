@@ -4,30 +4,23 @@ namespace App\Http\Controllers\Site\Revit;
 
 use App\Http\Controllers\Controller;
 use App\Models\Family;
-use Illuminate\Database\UniqueConstraintViolationException;
+use App\Services\FavoriteService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class FamilyFavoriteController extends Controller
 {
-    public function store(Request $request, Family $family): JsonResponse|RedirectResponse
+    public function store(Request $request, Family $family, FavoriteService $favorites): JsonResponse|RedirectResponse
     {
-        abort_unless($family->isPublished(), 404);
-
-        try {
-            $request->user()->favorites()->firstOrCreate(['family_id' => $family->id]);
-        } catch (UniqueConstraintViolationException) {
-            // A parallel request (double click) saved it first: same end result.
-        }
+        $favorites->add($request->user(), $family);
 
         return $this->respond($request, true, 'Família adicionada aos favoritos.');
     }
 
-    public function destroy(Request $request, Family $family): JsonResponse|RedirectResponse
+    public function destroy(Request $request, Family $family, FavoriteService $favorites): JsonResponse|RedirectResponse
     {
-        // No published check on purpose: users can always clean up their list.
-        $request->user()->favorites()->where('family_id', $family->id)->delete();
+        $favorites->remove($request->user(), $family);
 
         return $this->respond($request, false, 'Família removida dos favoritos.');
     }

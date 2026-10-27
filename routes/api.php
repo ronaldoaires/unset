@@ -7,6 +7,8 @@ use App\Http\Controllers\Api\V1\FamilyController;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\FamilyDownloadController;
+use App\Http\Controllers\Api\V1\FavoriteController;
+use App\Http\Controllers\Api\V1\DownloadHistoryController;
 
 // The "/api" prefix comes from bootstrap/app.php; versioning lives here.
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -28,5 +30,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('families/{family:slug}/download', FamilyDownloadController::class)
             ->middleware('throttle:20,1,api-download')
             ->name('families.download');
+
+        // The user's own lists. Favorites are open to every verified user.
+        Route::get('me/favorites', [FavoriteController::class, 'index'])->name('me.favorites.index');
+        Route::get('me/downloads', DownloadHistoryController::class)->name('me.downloads.index');
+
+        Route::post('families/{family:slug}/favorite', [FavoriteController::class, 'store'])->name('families.favorite.store');
+        Route::delete('families/{family:slug}/favorite', [FavoriteController::class, 'destroy'])->name('families.favorite.destroy');
     });
 });
