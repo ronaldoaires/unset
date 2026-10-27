@@ -33,6 +33,8 @@ class FamilyDetailResource extends FamilyResource
                 'url'          => route('api.v1.families.download', ['family' => $this->slug]),
                 'allowed'      => $access->allowed(),
                 'message'      => $access->message(),
+                // Machine-readable reason: null, "access_required" or "quota_exceeded".
+                'code'         => $access->code(),
                 // Purchases happen on the site, never inside the plugin.
                 'purchase_url' => ! $access->allowed() && ($this->price ?? 0) > 0
                     ? route('revit.families.purchase.show', ['family' => $this->slug])

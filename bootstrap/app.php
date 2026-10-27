@@ -6,6 +6,8 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Exceptions\InvalidSignatureException;
 use App\Http\Middleware\ForceJsonResponse;
+use Illuminate\Auth\Access\AuthorizationException;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -21,6 +23,27 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn(Request $request) => $request->is('api/*'),
         );
+
+        // Policy denials that carry a code (Response::deny($message, $code)) keep it
+        // in API answers, so clients branch on the code instead of the message.
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            $previous = $e->getPrevious();
+
+            if (! $request->is('api/*') || ! $previous instanceof AuthorizationException) {
+                return null;
+            }
+
+            $code = $previous->response()?->code() ?? $previous->getCode();
+
+            if (blank($code)) {
+                return null;
+            }
+
+            return response()->json([
+                'message' => $e->getMessage(),
+                'code'    => $code,
+            ], 403);
+        });
 
         // Expired or tampered verification links get a friendly page instead of
         // a bare 403. Returning null for any other route keeps the default handling.

@@ -40,9 +40,12 @@ class FamilyCatalogService
                 'brand',
                 fn (Builder $brandQuery) => $brandQuery->where('slug', $brand),
             ))
+            // free=1 keeps only free families, free=0 only paid ones; absent = both.
             ->when(
-                filter_var($filters['free'] ?? false, FILTER_VALIDATE_BOOLEAN),
-                fn (Builder $query) => $query->free(),
+                isset($filters['free']),
+                fn (Builder $query) => filter_var($filters['free'], FILTER_VALIDATE_BOOLEAN)
+                    ? $query->free()
+                    : $query->premium(),
             )
             // Only families the given Revit version can open.
             ->when(

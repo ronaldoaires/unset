@@ -20,6 +20,7 @@ never decide access on their own.
 | Money | `price` is a number in BRL (`49.9`), `formatted_price` is a ready-to-show string |
 | Language | Field names and codes in English; `message` texts are user-facing, in Portuguese — show them as they are |
 | Account creation | Not available through the API. Sign-up, e-mail verification and password reset happen on the site only. |
+| CORS | Browser calls are accepted only from the site's own origin (`APP_URL`). Desktop clients are not affected by CORS. |
 
 ### Recommended headers
 
@@ -182,11 +183,11 @@ A user with no plan gets:
 { "has_access": false, "modules": [], "permissions": [], "subscription": null, "quota": null }
 ```
 
-**Client guidance:** use `modules`/`has_access` to show or hide features and
-explain the plan state. The catalog and free downloads are available to every
-verified user; for each family, the authoritative answer is
-`download.allowed` in the detail endpoint (section 5.4), and the download
-endpoint enforces it again.
+**Client guidance:** `modules` gate the module-specific tools in the client
+(e.g. the Architectural or Structural tab), never the families. The catalog and
+downloads are available to every verified user; for each family, the
+authoritative answer is `download.allowed` in the detail endpoint (section 5.4),
+and the download endpoint enforces it again.
 
 ---
 
@@ -249,7 +250,7 @@ No parameters, no pagination, ordered by name.
 | `category` | string | max 100; **required when `subcategory` is sent** | Category slug |
 | `subcategory` | string | max 100 | Subcategory slug (inside `category`) |
 | `brand` | string | max 100 | Brand slug |
-| `free` | boolean | `1`/`0`/`true`/`false` | `1` = only free families. `0` or absent = no filter (it does **not** mean "only paid") |
+| `free` | boolean | `1` or `0` | `1` = only free families, `0` = only paid families, absent = both |
 | `revit_version` | int | 2000–2100 | Only families this Revit version can open (`family.revit_version <= value`). The plugin should always send the running Revit year. |
 | `sort` | string | `recent` (default), `downloads`, `views`, `name` | Newest first / most downloaded / most viewed / A–Z |
 | `per_page` | int | 1–50, default 20 | Page size |
@@ -338,6 +339,7 @@ Everything in the list item, plus:
       "url": "https://unset.com.br/api/v1/families/porta-giro-80x210/download",
       "allowed": false,
       "message": "Esta família é exclusiva para assinantes ou compra avulsa.",
+      "code": "access_required",
       "purchase_url": "https://unset.com.br/revit/familias/porta-giro-80x210/comprar"
     }
   }
@@ -356,6 +358,7 @@ Everything in the list item, plus:
 | `download.url` | string | Endpoint to call (section 6) |
 | `download.allowed` | bool | Server decision for **this user**, right now |
 | `download.message` | string \| null | Portuguese reason when `allowed` is `false`; `null` when allowed |
+| `download.code` | string \| null | `access_required`, `quota_exceeded`, or `null` when allowed (section 7.4) |
 | `download.purchase_url` | string \| null | Site page to buy the family; only when not allowed **and** `price > 0`. Purchases never happen inside the plugin — open it in the browser (the API token does not sign the user in on the site, so they may be asked to log in there). |
 
 **Download rule** (same as the site, `FamilyPolicy::download`), in order:
@@ -363,8 +366,11 @@ Everything in the list item, plus:
 1. Free family → allowed.
 2. Purchased by the user → allowed (never uses quota).
 3. Active subscription → allowed while `quota.used < quota.limit` (or unlimited); a family already counted this month is always allowed again.
-   Otherwise denied: `"Você atingiu o limite de downloads do seu plano neste mês."`
-4. Anything else → denied: `"Esta família é exclusiva para assinantes ou compra avulsa."`
+   Otherwise denied with `quota_exceeded`: `"Você atingiu o limite de downloads do seu plano neste mês."`
+4. Anything else → denied with `access_required`: `"Esta família é exclusiva para assinantes ou compra avulsa."`
+
+Plan **modules are not part of this rule**: families are open to every verified
+user under the rule above, whatever modules the plan has.
 
 **Errors:** 401, 403 `account_inactive`, **404** (slug does not exist or family is not published), 429.
 
@@ -394,7 +400,7 @@ completes; a broken transfer must not leave a half-written `.rfa`.
 |---|---|---|
 | 401 | Missing/expired/revoked token | no |
 | 403 | `account_inactive` (has `code`) | no |
-| 403 | Download not allowed — `{"message": "<reason from section 5.4>"}` (no `code`) | no |
+| 403 | Download not allowed — `{"message": "...", "code": "access_required" \| "quota_exceeded"}` | no |
 | 404 | Unknown slug, unpublished family, no `.rfa` attached, or file missing on disk | no |
 | 429 | More than 20 downloads per minute (or 120 requests/min overall) | no |
 
@@ -438,7 +444,8 @@ Never parse `message` text; it may change.
 | 401 | — | `{"message": "Unauthenticated."}` — token missing, expired, revoked (logout, same device signed in again, pushed out by the 5-device limit) | Clear stored token, show login |
 | 403 | `account_inactive` | Account deactivated. On authenticated routes the server also **revokes** the token used. | Clear token, show message |
 | 403 | `email_not_verified` | Login only: e-mail not confirmed | Show message (link is in the user's inbox) |
-| 403 | — | Download denied by the access rule | Show message; offer `purchase_url` / plan page if present |
+| 403 | `access_required` | Download denied: needs a subscription or a purchase | Show message; offer `purchase_url` (if present) and the plans page |
+| 403 | `quota_exceeded` | Download denied: monthly quota used up | Show message and `quota.resets_at` |
 | 404 | — | Family not found / not published / file missing. The `message` is not guaranteed — rely on the status. | "Família indisponível" |
 | 422 | — | Validation error or wrong credentials | Show `errors` |
 | 429 | `too_many_attempts` (login only) or none | Rate limited | Wait `Retry-After` seconds |
@@ -451,6 +458,8 @@ Never parse `message` text; it may change.
 | `account_inactive` | login + every authenticated route | 403 |
 | `email_not_verified` | login | 403 |
 | `too_many_attempts` | login | 429 |
+| `access_required` | family detail (`download.code`), download | 403 |
+| `quota_exceeded` | family detail (`download.code`), download | 403 |
 
 ---
 
@@ -466,13 +475,38 @@ Never parse `message` text; it may change.
 
 ---
 
-## 9. Versioning
+## 9. Security model
+
+The API is public in the sense that anyone can reach its URL, like any website.
+What protects it is **who** is calling, not **which program**:
+
+- Only `POST /auth/login` works without a token, and it is rate limited
+  (20/min per IP, 5 failed attempts per e-mail+IP, shared with the site).
+- Every other endpoint needs a valid token of an **active, verified** user.
+  Tokens are stored hashed, expire, can be revoked and are limited to 5 devices.
+- Access to paid content is decided on the server on every call
+  (`FamilyPolicy::download`); the client never decides.
+- The `.rfa` files live on a private disk and are only served through the
+  download endpoint, which records every download.
+
+There is deliberately **no "app key"** restricting the API to the plugin: any
+secret shipped inside a desktop plugin can be extracted from the DLL, so it
+would add no real protection. A client identification header (e.g. a
+`User-Agent` with the plugin version) is useful for statistics and for asking
+old versions to update, never for security.
+
+The repository is public, so no secret is ever committed: `.env` is git-ignored
+and `.env.example` lists the variables with empty values. Production must run
+with `APP_ENV=production` and `APP_DEBUG=false` (debug mode puts stack traces in
+JSON errors).
+
+## 10. Versioning
 
 - Breaking changes go to a new prefix (`/api/v2`); `/api/v1` keeps working until clients migrate.
 - Adding new fields or new endpoints is **not** breaking: clients must ignore unknown fields.
 
-## 10. Planned (not available yet)
+## 11. Planned (not available yet)
 
 - Favorites (list / add / remove) and download history.
 - Plugin update check endpoint.
-- Browser-based login (for Google-only accounts without a password).
+- Browser-based login (device authorization flow): the plugin asks for a short code, opens the site, the user approves while signed in there (password or Google) and the plugin receives its token. Covers Google-only accounts without a password, and the password never passes through the plugin.

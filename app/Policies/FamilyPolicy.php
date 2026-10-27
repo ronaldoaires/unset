@@ -80,9 +80,10 @@ class FamilyPolicy
         if ($user->isPremium()) {
             return $user->canDownload($family)
                 ? Response::allow()
-                : Response::deny('Você atingiu o limite de downloads do seu plano neste mês.');
+                : Response::deny('Você atingiu o limite de downloads do seu plano neste mês.', 'quota_exceeded');
         }
 
-        return Response::deny('Esta família é exclusiva para assinantes ou compra avulsa.');
+        // The code lets API clients branch without parsing the message.
+        return Response::deny('Esta família é exclusiva para assinantes ou compra avulsa.', 'access_required');
     }
 }

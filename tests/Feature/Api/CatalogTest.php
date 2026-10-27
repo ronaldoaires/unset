@@ -86,6 +86,7 @@ it('filters, searches and sorts the list', function () {
     expect($names('category=janelas'))->toBe(['Janela Alfa']);
     expect($names('brand=tigre'))->toBe(['Porta Pivotante']);
     expect($names('free=1'))->toEqualCanonicalizing(['Porta Pivotante', 'Janela Alfa']);
+    expect($names('free=0'))->toBe(['Mesa de Jantar']);
     expect($names('revit_version=2026'))->toEqualCanonicalizing(['Porta Pivotante', 'Janela Alfa']);
     expect($names('sort=name'))->toBe(['Janela Alfa', 'Mesa de Jantar', 'Porta Pivotante']);
 });
@@ -110,6 +111,7 @@ it('shows a free family as downloadable', function () {
         ->assertJsonPath('data.tags', ['porta pivotante'])
         ->assertJsonPath('data.download.url', route('api.v1.families.download', ['family' => $family->slug]))
         ->assertJsonPath('data.download.allowed', true)
+        ->assertJsonPath('data.download.code', null)
         ->assertJsonPath('data.download.purchase_url', null);
 });
 
@@ -121,6 +123,7 @@ it('offers the purchase link for a paid family without access', function () {
     $this->getJson("/api/v1/families/{$family->slug}")
         ->assertOk()
         ->assertJsonPath('data.download.allowed', false)
+        ->assertJsonPath('data.download.code', 'access_required')
         ->assertJsonPath('data.download.purchase_url', route('revit.families.purchase.show', ['family' => $family->slug]));
 });
 

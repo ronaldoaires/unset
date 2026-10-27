@@ -32,7 +32,8 @@ it('denies a paid family without access and records nothing', function () {
 
     $this->getJson("/api/v1/families/{$family->slug}/download")
         ->assertForbidden()
-        ->assertJsonStructure(['message']);
+        ->assertJsonPath('code', 'access_required')
+        ->assertJsonStructure(['message', 'code']);
 
     $this->assertDatabaseCount('downloads', 0);
     expect($family->fresh()->download_count)->toBe(0);
@@ -58,7 +59,9 @@ it('enforces the monthly quota but lets the same family be downloaded again', fu
     $this->get("/api/v1/families/{$first->slug}/download")->assertOk();
 
     // Another paid family is over the limit.
-    $this->getJson("/api/v1/families/{$second->slug}/download")->assertForbidden();
+    $this->getJson("/api/v1/families/{$second->slug}/download")
+        ->assertForbidden()
+        ->assertJsonPath('code', 'quota_exceeded');
 
     // The same family again never uses a new slot.
     $this->get("/api/v1/families/{$first->slug}/download")->assertOk();
