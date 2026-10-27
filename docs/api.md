@@ -36,7 +36,10 @@ User-Agent: UnSetBIM-Revit/{plugin version} (Revit {year})
 
 | Method | Path | Auth | Rate limit | Purpose |
 |---|---|---|---|---|
+| GET | `/plugin/latest` | — | 60/min per IP | Latest plugin release (update check) |
 | POST | `/auth/login` | — | 20/min per IP + 5 failed attempts per e-mail+IP | Sign in, get a token |
+| POST | `/auth/device` | — | 10/min per IP | Start a browser sign-in |
+| POST | `/auth/device/token` | — | 30/min per IP | Poll for the browser sign-in token |
 | GET | `/auth/me` | Bearer | 120/min | Current user + access block |
 | POST | `/auth/logout` | Bearer | 120/min | Revoke the current token |
 | GET | `/categories` | Bearer | 120/min | Categories with subcategories |
@@ -96,7 +99,7 @@ The client should store `token` securely (e.g. DPAPI on Windows) together with
 
 | Status | When | Body |
 |---|---|---|
-| 422 | Missing/invalid fields | Validation shape (section 8.2) |
+| 422 | Missing/invalid fields | Validation shape (section 9.2) |
 | 422 | Wrong e-mail or password — including Google-only accounts that have no password | `errors.email[0]` = `"E-mail ou senha incorretos. Se você criou a conta com o Google, defina uma senha em Minha conta > Senha, no site."` |
 | 403 | Correct password, account deactivated | `{"message": "...", "code": "account_inactive"}` |
 | 403 | Correct password, e-mail not verified yet | `{"message": "...", "code": "email_not_verified"}` |
@@ -128,7 +131,7 @@ Use it on plugin start to validate a stored token and refresh the access block.
 Note: `login` returns `user` and `access` side by side; `me` returns them merged
 inside `data`.
 
-**Errors:** 401, 403 `account_inactive`, 429 (section 8).
+**Errors:** 401, 403 `account_inactive`, 429 (section 9).
 
 ### 3.3 `POST /auth/logout`
 
@@ -137,6 +140,69 @@ Revokes only the token used in the request (other devices stay signed in).
 **204 No Content** — empty body. The client deletes its stored token either way.
 
 **Errors:** 401 (token already invalid — treat as logged out), 429.
+
+### 3.4 Browser sign-in (device authorization)
+
+Alternative to the password login, based on the OAuth 2.0 device authorization
+flow (RFC 8628). The user approves the plugin on the site, signed in there with
+a password **or Google**, so it also works for Google-only accounts and the
+password never passes through the plugin.
+
+```
+Plugin                         API                          Site (browser)
+  | POST /auth/device  -------->  |                                |
+  | <-- device_code, user_code    |                                |
+  | open verification_uri_complete -----------------------------> |
+  | show user_code                |      user signs in, compares   |
+  | POST /auth/device/token ----> |      the code, clicks Autorizar|
+  | <-- 400 authorization_pending |  <---------------------------- |
+  | POST /auth/device/token ----> |                                |
+  | <-- 200 token (same as login) |                                |
+```
+
+#### `POST /auth/device`
+
+**Body:** `device_name` (string, required, max 100) — same meaning as in the login.
+
+**200 OK**
+
+```json
+{
+  "device_code": "4f1c...e9 (64 hex chars, secret)",
+  "user_code": "KXQP-WMZB",
+  "verification_uri": "https://unset.com.br/conectar",
+  "verification_uri_complete": "https://unset.com.br/conectar?codigo=KXQP-WMZB",
+  "expires_in": 600,
+  "interval": 5
+}
+```
+
+| Field | Notes |
+|---|---|
+| `device_code` | Secret used only to poll. Keep it in memory, never show or log it. |
+| `user_code` | Show it big in the plugin; the user checks it matches the site. 8 consonants (no vowels, no look-alike characters). |
+| `verification_uri_complete` | Open it in the default browser. If the user is not signed in on the site, they sign in first and come back to it. |
+| `expires_in` | Seconds until the request expires (10 minutes). |
+| `interval` | Minimum seconds between polls. |
+
+**Errors:** 422 (`device_name`), 429.
+
+#### `POST /auth/device/token`
+
+**Body:** `device_code` (string, required). Poll every `interval` seconds until
+one of the final answers.
+
+| Status | `code` | Meaning | Client action |
+|---|---|---|---|
+| 200 | — | Approved. Body identical to `POST /auth/login` (token, `token_type`, `expires_at`, `user`, `access`); same device rules (same `device_name` replaces its token, max 5 devices). | Store the token, stop polling |
+| 400 | `authorization_pending` | Not answered yet | Keep polling |
+| 429 | `slow_down` | Polled faster than `interval` (`Retry-After` header) | Wait, then keep polling |
+| 403 | `access_denied` | The user clicked "Negar" | Stop, show message |
+| 403 | `account_inactive` | Account deactivated after the approval | Stop, show message |
+| 410 | `expired_token` | Expired, already used, or unknown device code | Stop; offer to start again |
+| 422 | — | Missing `device_code` | Fix the request |
+
+The token is handed out **once**: a second successful poll answers 410.
 
 ---
 
@@ -364,7 +430,7 @@ Everything in the list item, plus:
 | `download.url` | string | Endpoint to call (section 6) |
 | `download.allowed` | bool | Server decision for **this user**, right now |
 | `download.message` | string \| null | Portuguese reason when `allowed` is `false`; `null` when allowed |
-| `download.code` | string \| null | `access_required`, `quota_exceeded`, or `null` when allowed (section 8.4) |
+| `download.code` | string \| null | `access_required`, `quota_exceeded`, or `null` when allowed (section 9.4) |
 | `download.purchase_url` | string \| null | Site page to buy the family; only when not allowed **and** `price > 0`. Purchases never happen inside the plugin — open it in the browser (the API token does not sign the user in on the site, so they may be asked to log in there). |
 
 **Download rule** (same as the site, `FamilyPolicy::download`), in order:
@@ -475,9 +541,63 @@ download), most recently downloaded first. Only published families are listed.
 
 ---
 
-## 8. Errors
+## 8. Plugin updates
 
-### 8.1 Shape
+### `GET /plugin/latest`
+
+**Public** (no token): an old or signed-out plugin must still learn that it has
+to update. The data comes from the latest **GitHub Release** of the plugin
+repository (drafts and pre-releases are ignored), cached for 15 minutes.
+
+| Param | Type | Rules |
+|---|---|---|
+| `current` | string | optional; the running plugin version, `1.2.0` or `v1.2.0` (1 to 4 numeric parts) |
+
+**200 OK**
+
+```json
+{
+  "data": {
+    "version": "1.4.0",
+    "name": "UnSet BIM v1.4.0",
+    "notes": "- Correções...",
+    "released_at": "2026-10-27T18:00:00Z",
+    "release_url": "https://github.com/ronaldoaires/unset-bim-revit/releases/tag/v1.4.0",
+    "download_url": "https://github.com/ronaldoaires/unset-bim-revit/releases/download/v1.4.0/UnSetBIM-Setup.msi",
+    "file_name": "UnSetBIM-Setup.msi",
+    "size_bytes": 5242880,
+    "sha256": "9f2c...e1",
+    "min_version": "1.0.0",
+    "current": "1.2.0",
+    "update_available": true,
+    "update_required": false
+  }
+}
+```
+
+| Field | Type | Notes |
+|---|---|---|
+| `version` | string | Latest version, without the `v` prefix |
+| `notes` | string \| null | Release notes (Markdown, as written on GitHub) |
+| `download_url` | string \| null | Installer asset (`.msi`/`.exe`); `null` if the release has none — then open `release_url` |
+| `sha256` | string \| null | SHA-256 of the installer as published by GitHub. The client must verify the downloaded file against it before running it. |
+| `min_version` | string | Oldest version still supported |
+| `current` | string \| null | Echo of `current`, normalized |
+| `update_available` | bool \| null | `current < version`; `null` without `current` |
+| `update_required` | bool \| null | `current < min_version`: the client must block use until updated; `null` without `current` |
+
+Version comparison follows PHP's `version_compare`: plain numeric versions
+(`1.4.0`) only, no pre-release suffixes.
+
+**Errors:** 422 (invalid `current`), 429, **503** `update_info_unavailable`
+(GitHub never answered since the cache was empty; `Retry-After: 60`). When
+GitHub is down but a release was read before, that one keeps being served.
+
+---
+
+## 9. Errors
+
+### 9.1 Shape
 
 Every error is JSON with at least `message`. Some carry a machine-readable `code`:
 
@@ -488,7 +608,7 @@ Every error is JSON with at least `message`. Some carry a machine-readable `code
 Clients branch on **HTTP status + `code`** and show `message` to the user.
 Never parse `message` text; it may change.
 
-### 8.2 Validation (422)
+### 9.2 Validation (422)
 
 ```json
 {
@@ -499,7 +619,7 @@ Never parse `message` text; it may change.
 }
 ```
 
-### 8.3 Status reference
+### 9.3 Status reference
 
 | Status | `code` | Meaning | Client action |
 |---|---|---|---|
@@ -513,25 +633,32 @@ Never parse `message` text; it may change.
 | 404 | — | Family not found / not published / file missing. The `message` is not guaranteed — rely on the status. | "Família indisponível" |
 | 422 | — | Validation error or wrong credentials | Show `errors` |
 | 429 | `too_many_attempts` (login only) or none | Rate limited | Wait `Retry-After` seconds |
+| 503 | `update_info_unavailable` | Update information temporarily unavailable | Skip the update check silently |
 | 5xx | — | Server error | Generic error, allow retry |
 
-### 8.4 Error codes
+### 9.4 Error codes
 
 | Code | Endpoint(s) | Status |
 |---|---|---|
-| `account_inactive` | login + every authenticated route | 403 |
+| `account_inactive` | login, auth/device/token, every authenticated route | 403 |
 | `email_not_verified` | login | 403 |
 | `too_many_attempts` | login | 429 |
 | `access_required` | family detail (`download.code`), download | 403 |
 | `quota_exceeded` | family detail (`download.code`), download | 403 |
+| `update_info_unavailable` | plugin/latest | 503 |
+| `authorization_pending` | auth/device/token | 400 |
+| `slow_down` | auth/device/token | 429 |
+| `access_denied` | auth/device/token | 403 |
+| `expired_token` | auth/device/token | 410 |
 
 ---
 
-## 9. Recommended client flow (Revit plugin)
+## 10. Recommended client flow (Revit plugin)
 
+0. **Update check:** `GET /plugin/latest?current={version}` (no token needed). `update_required` → block and offer the installer; `update_available` → offer it.
 1. **Start:** if a token is stored and not past `expires_at`, call `GET /auth/me`.
    200 → update cached user/access. 401/403 → clear token, show login.
-2. **Login:** `POST /auth/login` with a stable `device_name` per installation. Store the token securely.
+2. **Login:** offer both options with a stable `device_name` per installation — "Entrar com e-mail e senha" (`POST /auth/login`) and "Entrar pelo navegador" (section 3.4, needed for Google-only accounts). A "Criar conta" button opens the site's sign-up page. Store the token securely.
 3. **Catalog:** load `/categories` and `/brands` once per session; list `/families` always sending `revit_version` = running Revit year.
 4. **Detail:** `GET /families/{slug}` → enable "Download" when `download.allowed`, otherwise show `download.message` and, if present, a button opening `download.purchase_url` in the browser.
 5. **Download:** `GET download.url` → save to temp → load into the project. Refresh `/auth/me` afterwards if the quota is shown.
@@ -539,13 +666,16 @@ Never parse `message` text; it may change.
 
 ---
 
-## 10. Security model
+## 11. Security model
 
 The API is public in the sense that anyone can reach its URL, like any website.
 What protects it is **who** is calling, not **which program**:
 
-- Only `POST /auth/login` works without a token, and it is rate limited
-  (20/min per IP, 5 failed attempts per e-mail+IP, shared with the site).
+- Only `POST /auth/login`, the browser sign-in (`/auth/device*`) and
+  `GET /plugin/latest` work without a token. Login is rate limited (20/min per
+  IP, 5 failed attempts per e-mail+IP, shared with the site); the browser
+  sign-in issues a token only after the signed-in user approves the code on
+  the site, and only once; the update check only returns public release data.
 - Every other endpoint needs a valid token of an **active, verified** user.
   Tokens are stored hashed, expire, can be revoked and are limited to 5 devices.
 - Access to paid content is decided on the server on every call
@@ -564,12 +694,7 @@ and `.env.example` lists the variables with empty values. Production must run
 with `APP_ENV=production` and `APP_DEBUG=false` (debug mode puts stack traces in
 JSON errors).
 
-## 11. Versioning
+## 12. Versioning
 
 - Breaking changes go to a new prefix (`/api/v2`); `/api/v1` keeps working until clients migrate.
 - Adding new fields or new endpoints is **not** breaking: clients must ignore unknown fields.
-
-## 12. Planned (not available yet)
-
-- Plugin update check endpoint.
-- Browser-based login (device authorization flow): the plugin asks for a short code, opens the site, the user approves while signed in there (password or Google) and the plugin receives its token. Covers Google-only accounts without a password, and the password never passes through the plugin.

@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\RegisterController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\SocialLoginController;
 use App\Http\Controllers\Auth\EmailChangeController;
+use App\Http\Controllers\Auth\DeviceAuthorizationController;
 
 Route::middleware('guest')->group(function () {
     Route::get('/cadastro', [RegisterController::class, 'create'])->name('register');
@@ -68,4 +69,18 @@ Route::middleware('auth')->group(function () {
         ->name('verification.send');
 
     Route::post('/sair', [LoginController::class, 'destroy'])->name('logout');
+});
+
+// Browser sign-in of the Revit plugin: the user confirms the code shown by the
+// plugin. Guests go to the login (password or Google) and come back here.
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/conectar', [DeviceAuthorizationController::class, 'show'])
+        ->middleware('throttle:30,1,device-show')
+        ->name('device.show');
+
+    Route::post('/conectar', [DeviceAuthorizationController::class, 'update'])
+        ->middleware('throttle:10,1,device-update')
+        ->name('device.update');
+
+    Route::get('/conectar/concluido', [DeviceAuthorizationController::class, 'done'])->name('device.done');
 });

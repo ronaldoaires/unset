@@ -14,13 +14,11 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use App\Services\AccessService;
+use App\Services\ApiTokenService;
 
 class AuthController extends Controller
 {
-    /** Devices (tokens) a user may keep signed in at the same time. */
-    private const MAX_DEVICES = 5;
-
-    public function login(Request $request, LoginLogService $logs, AccessService $access): JsonResponse
+    public function login(Request $request, LoginLogService $logs, ApiTokenService $tokens): JsonResponse
     {
         $data = $request->validate([
             'email'       => ['required', 'string', 'email'],
@@ -75,21 +73,7 @@ class AuthController extends Controller
 
         RateLimiter::clear($throttleKey);
 
-        $this->pruneDevices($user, $data['device_name']);
-
-        $minutes   = config('sanctum.expiration');
-        $expiresAt = $minutes ? now()->addMinutes((int) $minutes) : null;
-        $newToken  = $user->createToken($data['device_name'], ['*'], $expiresAt);
-
-        $logs->record($request, $user, true);
-
-        return response()->json([
-            'token'      => $newToken->plainTextToken,
-            'token_type' => 'Bearer',
-            'expires_at' => $expiresAt?->toAtomString(),
-            'user'       => (new UserResource($user))->resolve(),
-            'access'     => $access->summary($user),
-        ]);
+        return response()->json($tokens->issue($user, $data['device_name'], $request));
     }
 
     public function me(Request $request, AccessService $access): JsonResponse
@@ -109,20 +93,5 @@ class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->noContent();
-    }
-
-    /**
-     * A device signing in again replaces its previous token, and the oldest
-     * tokens are dropped when the user is over the device limit.
-     */
-    private function pruneDevices(User $user, string $deviceName): void
-    {
-        $user->tokens()->where('name', $deviceName)->delete();
-
-        $excess = $user->tokens()->count() - (self::MAX_DEVICES - 1);
-
-        if ($excess > 0) {
-            $user->tokens()->oldest()->limit($excess)->get()->each->delete();
-        }
     }
 }
