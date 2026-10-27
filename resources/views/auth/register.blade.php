@@ -16,8 +16,9 @@
 
         <form method="POST" action="{{ route('register') }}" class="space-y-6 rounded-card bg-surface p-6 shadow-card">
             @csrf
+            <x-auth.bot-trap />
 
-            <x-ui.input name="name" label="Nome" autocomplete="name" required autofocus />
+            <x-ui.input name="name" label="Nome" autocomplete="name" maxlength="100" required autofocus />
             <x-ui.input name="email" label="E-mail" type="email" autocomplete="email" required />
             <x-ui.input
                 name="password"

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Account;
 
 use App\Http\Controllers\Controller;
+use App\Rules\PersonName;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,10 +18,13 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         // Validate the digits only; the mask characters are added back on save.
-        $request->merge(['phone' => preg_replace('/\D/', '', (string) $request->input('phone'))]);
+        $request->merge([
+            'name'  => PersonName::normalize($request->input('name')),
+            'phone' => preg_replace('/\D/', '', (string) $request->input('phone')),
+        ]);
 
         $data = $request->validate([
-            'name'  => ['required', 'string', 'max:255'],
+            'name'  => ['required', 'string', 'min:2', 'max:100', new PersonName()],
             'phone' => ['nullable', 'digits_between:10,11'],
         ], [
             'phone.digits_between' => 'Informe um telefone com DDD (10 ou 11 dígitos).',
@@ -28,7 +32,7 @@ class ProfileController extends Controller
 
         // Email, role and is_active are never taken from this form.
         $request->user()->update([
-            'name'  => trim($data['name']),
+            'name'  => $data['name'],
             'phone' => $this->formatPhone($data['phone'] ?? null),
         ]);
 

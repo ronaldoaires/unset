@@ -40,6 +40,11 @@ return [
         // Relative URIs are expanded to the app URL by Socialite.
         'redirect'      => '/entrar/google/retorno',
     ],
+    // Cloudflare Turnstile (bot check on the sign-up form). Off while empty.
+    'turnstile' => [
+        'site_key'   => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
     'mercadopago' => [
         'access_token'   => env('MERCADOPAGO_ACCESS_TOKEN'),
         'webhook_secret' => env('MERCADOPAGO_WEBHOOK_SECRET'),
