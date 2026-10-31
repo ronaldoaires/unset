@@ -8,7 +8,7 @@
 return [
 
     // "owner/repository" of the public plugin repository.
-    'github_repo' => env('PLUGIN_GITHUB_REPO', 'ronaldoaires/unset-bim-revit'),
+    'github_repo' => env('PLUGIN_GITHUB_REPO', 'ronaldoaires/unset-plugin-revit'),
 
     // Optional. Without a token GitHub allows 60 requests/hour per IP, which
     // is plenty with the cache below. A fine-grained token with no

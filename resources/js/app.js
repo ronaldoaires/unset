@@ -17,6 +17,18 @@ document.addEventListener('submit', (event) => {
         return;
     }
 
+    // A disabled button is left out of the submitted data, so a named submit
+    // button (e.g. name="action" value="approve") would lose its value.
+    // Carry it in a hidden input before disabling the button.
+    if (button.name) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.name = button.name;
+        hidden.value = button.value;
+        hidden.setAttribute('data-submitter-value', '');
+        form.appendChild(hidden);
+    }
+
     button.setAttribute('data-loading', '');
     button.setAttribute('aria-busy', 'true');
     button.disabled = true;
@@ -34,6 +46,9 @@ window.addEventListener('pageshow', (event) => {
         button.removeAttribute('aria-busy');
         button.disabled = false;
     });
+
+    // Drop the hidden copies of the submit button values added above.
+    document.querySelectorAll('input[data-submitter-value]').forEach((input) => input.remove());
 });
 
 // Brazilian phone mask for inputs marked with data-mask="phone".
