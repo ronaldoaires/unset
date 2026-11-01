@@ -30,8 +30,8 @@ class UsersTable
                     // Same look as the site's initials circle, drawn as an inline SVG.
                     ->defaultImageUrl(function (User $record): string {
                         $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">'
-                            . '<rect width="40" height="40" fill="#dbe8ff"/>'
-                            . '<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#093e92">'
+                            . '<rect width="40" height="40" fill="#ebebff"/>'
+                            . '<text x="50%" y="50%" dy=".35em" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="600" fill="#240563">'
                             . e($record->initials)
                             . '</text></svg>';
 

@@ -46,18 +46,20 @@
         "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
         "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 
-    /* Brand scale: change these to re-skin the whole site. */
-    --color-brand-50: #eff5ff;
-    --color-brand-100: #dbe8ff;
-    --color-brand-200: #bcd4ff;
-    --color-brand-300: #93b8f5;
-    --color-brand-400: #679be7;
-    --color-brand-500: #3d85f7;
-    --color-brand-600: #176bff;
-    --color-brand-700: #0f54c9;
-    --color-brand-800: #093e92;
-    --color-brand-900: #062a66;
-    --color-brand-950: #041b44;
+    /* Brand scale: change these to re-skin the whole site.
+       Base color #402399 (UnSet BIM purple, same as the reels) sits at 600.
+       Lighter and darker steps keep its hue in OKLCH, so tints do not drift. */
+    --color-brand-50: #f6f6fe;
+    --color-brand-100: #ebebff;
+    --color-brand-200: #d7d6fe;
+    --color-brand-300: #bab8fe;
+    --color-brand-400: #9388ff;
+    --color-brand-500: #6f58e2;
+    --color-brand-600: #402399;
+    --color-brand-700: #32137f;
+    --color-brand-800: #240563;
+    --color-brand-900: #180248;
+    --color-brand-950: #0d0031;
 
     /* Semantic colors: pages and components use only these names. */
     --color-primary: var(--color-brand-600);
@@ -67,7 +69,7 @@
     --color-on-primary-soft: var(--color-brand-800);
     --color-on-primary: #ffffff;
 
-    --color-header: var(--color-brand-800);
+    --color-header: var(--color-brand-600);
     --color-on-header: #ffffff;
 
     --color-accent: #f59e0b;

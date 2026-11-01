@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Site\HomeController;
+use App\Http\Controllers\Site\PluginDownloadController;
 use App\Http\Controllers\Site\SitemapController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Site\CheckoutController;
@@ -10,6 +11,11 @@ use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 Route::get('/', HomeController::class)->name('home');
 
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
+
+// "Baixar plugin" button: redirects to the installer of the latest plugin release.
+Route::get('/plugin/baixar', PluginDownloadController::class)
+    ->middleware('throttle:30,1')
+    ->name('plugin.download');
 
 // Everything Revit-related lives under /revit (URL and route names).
 // The routes themselves are in routes/revit.php, without the prefix.

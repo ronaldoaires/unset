@@ -22,6 +22,19 @@
             @endforeach
         </nav>
 
-        <x-site.user-menu />
+        <div class="flex items-center gap-2">
+            {{-- Plugin download: full button on desktop, icon on small screens. --}}
+            <a
+                href="{{ route('plugin.download') }}"
+                class="inline-flex min-h-12 items-center gap-2 rounded-control border border-on-header/30 px-3 text-sm font-semibold transition hover:bg-on-header/10"
+                title="Plugin UnSet BIM para Revit 2025 ou superior (Windows)"
+                aria-label="Baixar o plugin para Revit"
+            >
+                @svg('heroicon-o-arrow-down-tray', 'size-5')
+                <span class="hidden md:inline">Baixar plugin</span>
+            </a>
+
+            <x-site.user-menu />
+        </div>
     </div>
 </header>
