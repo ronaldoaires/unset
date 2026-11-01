@@ -45,7 +45,6 @@
                 </div>
 
                 <p class="mt-6 text-2xl font-bold text-ink">{{ $family->formatted_price }}</p>
-                <p class="mt-1 text-xs font-semibold text-primary">Grátis com assinatura</p>
 
                 <div class="mt-6">
                     @guest

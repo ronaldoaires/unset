@@ -3,6 +3,7 @@
 @php
 $money = fn ($value) => number_format((float) $value, 2, ',', '.');
 $hasYearly = $plans->contains(fn ($plan) => $plan->price_yearly > 0);
+$maxYearlyDiscount = (int) $plans->max(fn ($plan) => $plan->yearlyDiscountPercent());
 @endphp
 
 @if ($plans->isNotEmpty())
@@ -19,18 +20,24 @@ $hasYearly = $plans->contains(fn ($plan) => $plan->price_yearly > 0);
         @if ($hasYearly)
         <div class="mt-8 flex justify-center">
             <div class="inline-flex rounded-full bg-canvas p-1" role="radiogroup" aria-label="Ciclo de cobrança">
-                <input id="cycle-monthly" name="cycle" type="radio" class="peer/monthly sr-only" checked>
+                {{-- Yearly comes first and checked: it is the cheapest option, so visitors see it by default. --}}
+                <input id="cycle-yearly" name="cycle" type="radio" class="peer/yearly sr-only" checked>
+                <label
+                    for="cycle-yearly"
+                    class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-muted transition peer-checked/yearly:bg-primary peer-checked/yearly:text-on-primary peer-focus-visible/yearly:ring-2 peer-focus-visible/yearly:ring-primary peer-focus-visible/yearly:ring-offset-2">
+                    Anual
+                    @if ($maxYearlyDiscount > 0)
+                    <span class="rounded-full bg-success-soft px-2 py-0.5 text-xs font-bold text-success">
+                        economize até {{ $maxYearlyDiscount }}%
+                    </span>
+                    @endif
+                </label>
+
+                <input id="cycle-monthly" name="cycle" type="radio" class="peer/monthly sr-only">
                 <label
                     for="cycle-monthly"
                     class="min-h-11 cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold text-muted transition peer-checked/monthly:bg-primary peer-checked/monthly:text-on-primary peer-focus-visible/monthly:ring-2 peer-focus-visible/monthly:ring-primary peer-focus-visible/monthly:ring-offset-2">
                     Mensal
-                </label>
-
-                <input id="cycle-yearly" name="cycle" type="radio" class="peer/yearly sr-only">
-                <label
-                    for="cycle-yearly"
-                    class="min-h-11 cursor-pointer rounded-full px-6 py-2.5 text-sm font-semibold text-muted transition peer-checked/yearly:bg-primary peer-checked/yearly:text-on-primary peer-focus-visible/yearly:ring-2 peer-focus-visible/yearly:ring-primary peer-focus-visible/yearly:ring-offset-2">
-                    Anual
                 </label>
             </div>
         </div>
@@ -58,7 +65,7 @@ $hasYearly = $plans->contains(fn ($plan) => $plan->price_yearly > 0);
                 <p class="mt-1 text-sm leading-relaxed text-muted">{{ $plan->description }}</p>
                 @endif
 
-                {{-- Price: monthly by default, yearly when the switch is on "Anual". --}}
+                {{-- Price: yearly by default, monthly when the switch is on "Mensal". --}}
                 <div class="mt-5 min-h-24">
                     <div @class(['group-has-[#cycle-yearly:checked]/plans:hidden'=> $canYearly])>
                         <p class="text-4xl font-bold leading-none text-ink">

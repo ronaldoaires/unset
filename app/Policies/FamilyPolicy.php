@@ -84,6 +84,6 @@ class FamilyPolicy
         }
 
         // The code lets API clients branch without parsing the message.
-        return Response::deny('Esta família é exclusiva para assinantes ou compra avulsa.', 'access_required');
+        return Response::deny('Esta família é exclusiva para assinantes.', 'access_required');
     }
 }
