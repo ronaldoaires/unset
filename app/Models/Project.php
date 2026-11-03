@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Services\ImageService;
+use App\Traits\CleansRichContentImages;
 use App\Traits\HasPublicImages;
 use App\Traits\TracksViews;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  */
 class Project extends Model
 {
+    use CleansRichContentImages;
     use HasPublicImages;
     use TracksViews;
 

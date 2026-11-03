@@ -72,6 +72,28 @@ class ImageService
         return $path;
     }
 
+    /**
+     * Stores an image pasted into a rich text field: converted to webp and
+     * scaled down to a sensible width, under a random name (rich content has
+     * no slug of its own). No thumbnail: the image is shown inside the text.
+     */
+    public function storeContentImage(
+        mixed $file,
+        string $directory,
+        int $maxWidth = 1600,
+        string $disk = 'public'
+    ): string {
+        $path = $directory . '/' . Str::lower(Str::random(24)) . '.webp';
+
+        $encoded = Image::decode($file)
+            ->scaleDown(width: $maxWidth)
+            ->encode(new WebpEncoder(quality: 80));
+
+        Storage::disk($disk)->put($path, $encoded);
+
+        return $path;
+    }
+
     public function generateThumb(
         string $path,
         string $disk = 'public',
