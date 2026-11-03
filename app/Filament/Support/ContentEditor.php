@@ -9,7 +9,8 @@ use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 /**
  * Rich text field shared by services and portfolio projects: images go to
  * the public disk as webp, in a "content" folder per model, so
- * CleansRichContentImages can find and remove them later.
+ * CleansRichContentImages can find and remove them later. Images can be
+ * resized in the editor by dragging their corners.
  */
 class ContentEditor
 {
@@ -23,6 +24,9 @@ class ContentEditor
                 ['attachFiles', 'horizontalRule'],
                 ['undo', 'redo'],
             ])
+            // Click an image and drag its corners to resize it. The width is saved
+            // in the HTML, so the public page shows the same size (capped at 100%).
+            ->resizableImages()
             ->fileAttachmentsDisk('public')
             ->fileAttachmentsDirectory($directory)
             ->fileAttachmentsVisibility('public')

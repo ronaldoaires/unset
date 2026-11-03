@@ -4,7 +4,10 @@ namespace App\Services;
 
 use App\Models\Brand;
 use App\Models\Category;
+use App\Enums\ServiceArea;
 use App\Models\Family;
+use App\Models\Project;
+use App\Models\Service;
 use App\Models\Subcategory;
 use Illuminate\Support\Carbon;
 
@@ -83,6 +86,68 @@ class SitemapService
                 'loc'     => route('revit.families.show', ['family' => $family->slug]),
                 'lastmod' => $this->iso($family->updated_at),
             ];
+        }
+
+        array_push($entries, ...$this->showcaseEntries());
+
+        return $entries;
+    }
+
+    /**
+     * Services hub, area pages, service pages, portfolio and projects.
+     * Same rules as the pages: only active records, and an area only when
+     * it has at least one active service.
+     *
+     * @return array<int, array{loc: string, lastmod: ?string}>
+     */
+    private function showcaseEntries(): array
+    {
+        $services = Service::active()->get(['id', 'area', 'slug', 'updated_at', 'sort_order', 'name']);
+
+        if ($services->isEmpty()) {
+            return [];
+        }
+
+        $entries = [[
+            'loc'     => route('services.index'),
+            'lastmod' => $this->iso($services->max('updated_at')),
+        ]];
+
+        foreach (ServiceArea::cases() as $area) {
+            $inArea = $services->filter(fn (Service $service) => $service->area === $area);
+
+            if ($inArea->isNotEmpty()) {
+                $entries[] = [
+                    'loc'     => route('services.area', ['area' => $area->slug()]),
+                    'lastmod' => $this->iso($inArea->max('updated_at')),
+                ];
+            }
+        }
+
+        foreach ($services as $service) {
+            $entries[] = [
+                'loc'     => route('services.show', ['area' => $service->area->slug(), 'service' => $service->slug]),
+                'lastmod' => $this->iso($service->updated_at),
+            ];
+        }
+
+        $projects = Project::query()
+            ->where('is_active', true)
+            ->whereIn('service_id', $services->pluck('id'))
+            ->get(['id', 'slug', 'updated_at']);
+
+        if ($projects->isNotEmpty()) {
+            $entries[] = [
+                'loc'     => route('portfolio.index'),
+                'lastmod' => $this->iso($projects->max('updated_at')),
+            ];
+
+            foreach ($projects as $project) {
+                $entries[] = [
+                    'loc'     => route('portfolio.show', ['project' => $project->slug]),
+                    'lastmod' => $this->iso($project->updated_at),
+                ];
+            }
         }
 
         return $entries;

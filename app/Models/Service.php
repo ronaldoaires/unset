@@ -69,6 +69,16 @@ class Service extends Model
         return Attribute::make(get: fn () => $this->publicThumbUrl($this->cover_path));
     }
 
+    /**
+     * Heroicons outline name to render, falling back to the area's icon.
+     */
+    protected function iconName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->icon ?: config('showcase.areas.' . $this->area?->value . '.icon', 'briefcase')
+        );
+    }
+
     protected function metaTitle(): Attribute
     {
         return Attribute::make(get: fn () => $this->seo_title ?: $this->name);

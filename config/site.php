@@ -18,6 +18,8 @@ return [
         ['label' => 'Início',    'route' => 'home',            'icon' => 'home',               'enabled' => true,  'bottom' => true],
         // "active" widens the highlight to every page of the section.
         ['label' => 'Famílias',  'route' => 'revit.families.index', 'active' => 'revit.families.*', 'icon' => 'rectangle-stack', 'enabled' => true, 'bottom' => true],
+        ['label' => 'Serviços',  'route' => 'services.index',  'active' => 'services.*',  'icon' => 'briefcase', 'enabled' => true, 'bottom' => true],
+        ['label' => 'Portfólio', 'route' => 'portfolio.index', 'active' => 'portfolio.*', 'icon' => 'photo',     'enabled' => true, 'bottom' => false],
         
         ['label' => 'Templates', 'route' => 'templates.index', 'icon' => 'document-duplicate', 'enabled' => false, 'bottom' => false],
         ['label' => 'Planilhas', 'route' => 'sheets.index',    'icon' => 'table-cells',        'enabled' => false, 'bottom' => false],

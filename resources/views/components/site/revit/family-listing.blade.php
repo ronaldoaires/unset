@@ -85,5 +85,5 @@
         @endforeach
     </div>
 
-    {{ $families->links('site.pagination') }}
+    {{ $families->links('components.site.pagination') }}
 @endif

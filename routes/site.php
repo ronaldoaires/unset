@@ -21,6 +21,9 @@ Route::get('/plugin/baixar', PluginDownloadController::class)
 // The routes themselves are in routes/revit.php, without the prefix.
 Route::prefix('revit')->name('revit.')->group(base_path('routes/revit.php'));
 
+// Engineering and technology services and the portfolio (/servicos, /portfolio).
+require base_path('routes/showcase.php');
+
 // Checkout: needs a logged-in, verified user. Guests are sent to the login and
 // come back here afterwards (intended URL).
 Route::middleware(['auth', 'verified'])->group(function () {

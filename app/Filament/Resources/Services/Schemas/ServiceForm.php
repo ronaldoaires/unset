@@ -52,8 +52,16 @@ class ServiceForm
                     TextInput::make('icon')
                         ->label('Ícone')
                         ->placeholder('Ex: building-office-2')
-                        ->helperText('Nome de um ícone Heroicons (outline), sem o prefixo.')
-                        ->maxLength(60),
+                        ->helperText('Nome de um ícone Heroicons (outline), sem o prefixo. Em branco, usa o ícone da área.')
+                        ->maxLength(60)
+                        // A wrong name would break the public page, so it is checked against the icon set.
+                        ->rules([
+                            fn () => function (string $attribute, mixed $value, \Closure $fail) {
+                                if (filled($value) && ! is_file(base_path('vendor/blade-ui-kit/blade-heroicons/resources/svg/o-' . $value . '.svg'))) {
+                                    $fail('Ícone não encontrado. Confira o nome em heroicons.com (estilo outline).');
+                                }
+                            },
+                        ]),
                 ]),
 
             Section::make('Imagem de capa')
