@@ -72,7 +72,7 @@
                 <div class="rounded-card bg-surface p-6 shadow-card">
                     <h2 class="text-lg font-bold text-ink">Quer um projeto assim?</h2>
                     <p class="mt-1 text-sm text-muted">Conte o que você precisa e receba uma proposta sem compromisso.</p>
-                    <x-site.showcase.cta-buttons :service="$project->service" :project="$project" class="mt-5 [&>a]:w-full sm:flex-col" />
+                    <x-site.showcase.cta-buttons :service="$project->service" :project="$project" class="mt-5 [&_a]:w-full [&_button]:w-full sm:flex-col" />
                 </div>
             </aside>
         </div>

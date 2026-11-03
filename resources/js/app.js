@@ -211,3 +211,59 @@ document.addEventListener('input', (event) => {
         .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
         .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4');
 });
+// Lazy Cloudflare Turnstile for forms marked with <div data-turnstile-lazy>
+// (the footer "Fale conosco" form, present on every page). The challenge
+// script is downloaded only when the visitor first focuses the form, so
+// ordinary page views stay light. Forms with a regular .cf-turnstile widget
+// are not affected.
+const renderLazyTurnstile = (container) => {
+    if (container.dataset.rendered) {
+        return;
+    }
+
+    container.dataset.rendered = '1';
+
+    window.turnstile.render(container, {
+        sitekey: container.dataset.sitekey,
+        language: 'pt-br',
+        size: 'flexible',
+    });
+};
+
+let turnstileLoading = null;
+
+const loadTurnstile = () => {
+    if (window.turnstile) {
+        return Promise.resolve();
+    }
+
+    turnstileLoading ??= new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+
+    return turnstileLoading;
+};
+
+document.addEventListener('focusin', (event) => {
+    const form = event.target instanceof Element ? event.target.closest('form') : null;
+    const container = form?.querySelector('[data-turnstile-lazy]');
+
+    if (! container || container.dataset.rendered) {
+        return;
+    }
+
+    loadTurnstile().then(() => renderLazyTurnstile(container)).catch(() => {
+        // Script blocked or offline: the server answers with a clear error on submit.
+    });
+});
+
+// A form that came back with errors already has the visitor's attention.
+document.querySelectorAll('[data-turnstile-lazy][data-autoload]').forEach((container) => {
+    loadTurnstile().then(() => renderLazyTurnstile(container)).catch(() => {});
+});

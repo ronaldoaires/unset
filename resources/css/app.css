@@ -220,3 +220,16 @@
         background: rgb(255 255 255 / 0.25);
     }
 }
+
+/* Quote form: the extra questions follow the chosen service's area, with no
+   JavaScript. Both groups stay in the form; the server keeps the right one. */
+@layer components {
+    .quote-form [data-details] {
+        display: none;
+    }
+
+    .quote-form:has(option[data-area="engineering"]:checked) [data-details="engineering"],
+    .quote-form:has(option[data-area="technology"]:checked) [data-details="technology"] {
+        display: grid;
+    }
+}

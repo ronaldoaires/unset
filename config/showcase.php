@@ -13,6 +13,16 @@
 
 return [
 
+    // Private contact data: read only on the server, never printed in a page.
+    'contact' => [
+        // Digits with country code, e.g. 5566981068854. Used by the /whatsapp redirect.
+        'whatsapp'    => env('SHOWCASE_WHATSAPP'),
+        // Inbox that receives quote requests and messages (defaults to the mail sender).
+        'leads_email' => env('SHOWCASE_LEADS_EMAIL', env('MAIL_FROM_ADDRESS')),
+        // Promise shown after sending and in the auto-reply.
+        'reply_time'  => 'em até 1 dia útil',
+    ],
+
     'company' => [
         'name'         => 'UnSet',
         'area_served'  => 'Brasil',
