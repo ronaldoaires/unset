@@ -9,6 +9,11 @@
         {{-- Desktop navigation. On mobile the bottom bar takes over. --}}
         <nav class="hidden flex-1 items-center gap-1 md:flex" aria-label="Principal">
             @foreach ($items as $item)
+                @if (($item['submenu'] ?? null) === 'services' && ($menuAreas ??= \App\Support\ShowcaseMenu::areas()))
+                    <x-site.services-menu :label="$item['label']" :areas="$menuAreas" :active="request()->routeIs($item['active'] ?? $item['route'])" />
+                    @continue
+                @endif
+
                 <a
                     href="{{ route($item['route']) }}"
                     @class([

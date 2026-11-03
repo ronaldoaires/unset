@@ -77,7 +77,7 @@ class StructuredData
     public static function organization(): array
     {
         $company     = config('showcase.company');
-        $responsible = config('showcase.responsible');
+        $person = config('showcase.person');
 
         return [
             '@type'      => 'ProfessionalService',
@@ -87,10 +87,10 @@ class StructuredData
             'areaServed' => ['@type' => 'Country', 'name' => $company['area_served']],
             'employee'   => [
                 '@type'      => 'Person',
-                'name'       => $responsible['name'],
-                'jobTitle'   => $responsible['title'],
-                'identifier' => $responsible['registry'],
-                'sameAs'     => array_values($responsible['links']),
+                'name'       => $person['name'],
+                'jobTitle'   => array_values(array_map(fn (array $profile) => $profile['title'], config('showcase.profiles'))),
+                'identifier' => config('showcase.profiles.engineering.badge'),
+                'sameAs'     => array_values($person['links']),
             ],
         ];
     }

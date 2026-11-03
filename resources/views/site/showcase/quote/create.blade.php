@@ -160,7 +160,12 @@
 
             <p class="flex items-start gap-2 px-2 text-sm text-subtle">
                 @svg('heroicon-o-shield-check', 'mt-0.5 size-5 shrink-0 text-primary')
-                {{ config('showcase.company.name') }} - {{ mb_strtolower(config('showcase.responsible.role')) }} {{ config('showcase.responsible.name') }}, {{ config('showcase.responsible.title') }} {{ config('showcase.responsible.registry') }}.
+                @if ($selected)
+                @php($profile = config('showcase.profiles.' . $selected->area->value))
+                {{ config('showcase.person.name') }}, {{ $profile['title'] }} · {{ $profile['badge'] }}.
+                @else
+                {{ config('showcase.person.name') }}, Engenheiro Civil ({{ config('showcase.profiles.engineering.badge') }}) e {{ config('showcase.profiles.technology.title') }}.
+                @endif
             </p>
         </aside>
     </div>

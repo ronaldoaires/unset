@@ -151,3 +151,37 @@ it('lists services and projects in the sitemap', function () {
         ->assertSee(url('/portfolio/sobrado-10x16'), false)
         ->assertDontSee('rascunho', false);
 });
+
+it('shows the developer profile, not the engineering one, on technology services', function () {
+    showcaseService(['area' => ServiceArea::Technology, 'name' => 'Criação de Sites', 'slug' => 'criacao-de-sites']);
+
+    $this->get('/servicos/tecnologia/criacao-de-sites')
+        ->assertOk()
+        ->assertSee('Desenvolvedor Full Stack')
+        ->assertSee('Tecnólogo em Sistemas para Internet')
+        ->assertDontSee('MBA em Gestão de Obras');
+});
+
+it('lists the services in the header submenu, the footer and the home page', function () {
+    showcaseService();
+    showcaseService(['area' => ServiceArea::Technology, 'name' => 'Criação de Sites', 'slug' => 'criacao-de-sites']);
+
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('data-dropdown', false)
+        ->assertSee('Serviços de engenharia')
+        ->assertSee('Serviços de tecnologia')
+        ->assertSee(url('/servicos/engenharia/projeto-estrutural'), false)
+        ->assertSee(url('/servicos/tecnologia/criacao-de-sites'), false)
+        ->assertSee('id="servicos"', false);
+});
+
+it('refreshes the menus when a service is switched off', function () {
+    $service = showcaseService();
+
+    $this->get('/')->assertSee('Projeto Estrutural');
+
+    $service->update(['is_active' => false]);
+
+    $this->get('/')->assertDontSee('Projeto Estrutural');
+});

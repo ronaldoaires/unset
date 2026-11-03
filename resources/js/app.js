@@ -267,3 +267,25 @@ document.addEventListener('focusin', (event) => {
 document.querySelectorAll('[data-turnstile-lazy][data-autoload]').forEach((container) => {
     loadTurnstile().then(() => renderLazyTurnstile(container)).catch(() => {});
 });
+
+// Dropdowns built on <details data-dropdown> (header "Serviços" submenu):
+// they open without JavaScript; here they also close on an outside click,
+// on Esc, and when another one opens.
+document.addEventListener('click', (event) => {
+    document.querySelectorAll('details[data-dropdown][open]').forEach((menu) => {
+        if (! menu.contains(event.target)) {
+            menu.removeAttribute('open');
+        }
+    });
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') {
+        return;
+    }
+
+    document.querySelectorAll('details[data-dropdown][open]').forEach((menu) => {
+        menu.removeAttribute('open');
+        menu.querySelector('summary')?.focus();
+    });
+});

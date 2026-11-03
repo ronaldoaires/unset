@@ -10,9 +10,19 @@
             Famílias Revit, templates, planilhas e ferramentas de cálculo em um só lugar.
         </p>
 
-        <x-ui.button :href="route('revit.families.index')" size="lg" class="mt-8">Explorar famílias Revit</x-ui.button>
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <x-ui.button :href="route('revit.families.index')" size="lg">Explorar famílias Revit</x-ui.button>
+            @if ($areas->isNotEmpty())
+            <x-ui.button href="#servicos" variant="tonal" size="lg">Contratar um projeto</x-ui.button>
+            @endif
+        </div>
     </section>
 
+    {{-- Section order: change it here; each section hides itself when empty. --}}
     <x-site.sections.plans :plans="$plans" />
-    
+
+    <x-site.sections.services :areas="$areas" />
+
+    <x-site.sections.portfolio :projects="$projects" />
+
 </x-layouts.site>

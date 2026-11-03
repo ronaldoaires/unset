@@ -36,6 +36,6 @@ class LeadReceivedNotification extends Notification
             ->greeting('Olá, ' . $firstName . '!')
             ->line('Recebemos ' . $what . ' e vamos responder ' . $replyTime . '.')
             ->line('Se quiser acrescentar alguma informação, é só responder este e-mail.')
-            ->salutation('Atenciosamente, ' . $company . ' - ' . mb_strtolower(config('showcase.responsible.role')) . ' ' . config('showcase.responsible.name'));
+            ->salutation('Atenciosamente, ' . config('showcase.person.name') . ' - ' . $company);
     }
 }

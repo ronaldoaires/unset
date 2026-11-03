@@ -16,9 +16,10 @@
 
                 <x-site.showcase.cta-buttons :service="$service" inverse class="mt-8" />
 
+                @php($profile = config('showcase.profiles.' . $service->area->value))
                 <p class="mt-6 flex items-center gap-2 text-sm text-on-header/80">
                     @svg('heroicon-o-shield-check', 'size-5')
-                    {{ config('showcase.responsible.title') }} {{ config('showcase.responsible.name') }} · {{ config('showcase.responsible.registry') }}
+                    {{ $profile['title'] }} {{ config('showcase.person.name') }} · {{ $profile['badge'] }}
                 </p>
             </div>
 
@@ -82,7 +83,7 @@
         </section>
         @endif
 
-        <x-site.showcase.responsible />
+        <x-site.showcase.responsible :area="$service->area" />
 
         @if (filled($service->faq))
         <section aria-labelledby="faq-heading">

@@ -29,22 +29,42 @@ return [
         'service_mode' => 'Atendimento online para todo o Brasil',
     ],
 
-    // Shown on every service page: in engineering the person signing the
-    // project matters as much as the project itself.
-    'responsible' => [
-        'name'        => 'Ronaldo Aires',
-        'role'        => 'Responsável técnico',
-        'title'       => 'Engenheiro Civil',
-        'registry'    => 'CREA-MT 62629',
-        'credentials' => [
-            'Engenheiro Civil',
-            'MBA em Gestão de Obras',
-            'Pós-graduação em BIM em Gerenciamento de Projetos',
-            'Desenvolvedor de sistemas web e aplicativos',
-        ],
+    // The person behind the services. Each area shows the profile that
+    // matters to its client: engineering shows the CREA registry and
+    // engineering degrees; technology shows the developer side.
+    'person' => [
+        'name'  => 'Ronaldo Aires',
         'links' => [
             'LinkedIn' => 'https://www.linkedin.com/in/ronaldoaires/',
             'GitHub'   => 'https://github.com/ronaldoaires',
+        ],
+    ],
+
+    // Keyed by App\Enums\ServiceArea values.
+    'profiles' => [
+        'engineering' => [
+            'title'    => 'Engenheiro Civil',
+            'badge'    => 'CREA-MT 62629',
+            'headline' => 'Responsável técnico pelos projetos, com registro no CREA.',
+            'credentials' => [
+                'Engenharia Civil - UNEMAT',
+                'MBA em Gestão de Obras na Construção Civil',
+                'Pós-graduação em BIM em Gerenciamento de Projetos e Qualidade de Obras',
+                'Projetos em BIM com Revit, Eberick e AltoQi Builder',
+            ],
+        ],
+        'technology' => [
+            'title'    => 'Desenvolvedor Full Stack',
+            'badge'    => 'Laravel · Flutter · Python',
+            'headline' => 'Sites, sistemas e aplicativos desenvolvidos de ponta a ponta, do banco de dados à tela.',
+            'credentials' => [
+                'Tecnólogo em Sistemas para Internet - IFMT',
+                'Graduação em Ciência de Dados - UNICID',
+                'Pós-graduação em Inteligência Artificial e Análise de Dados',
+                'Pós-graduação em Ciência de Dados e Big Data Analytics',
+                'Instrutor de cursos de programação na Udemy e no YouTube',
+                'Sistemas com pagamentos online, APIs, painéis administrativos e apps',
+            ],
         ],
     ],
 

@@ -46,7 +46,7 @@
 
         <x-site.showcase.steps />
 
-        <x-site.showcase.responsible />
+        <x-site.showcase.responsible :area="$area" />
 
         <x-site.showcase.cta-banner />
     </div>

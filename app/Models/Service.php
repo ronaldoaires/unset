@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ServiceArea;
 use App\Services\ImageService;
+use App\Support\ShowcaseMenu;
 use App\Traits\CleansRichContentImages;
 use App\Traits\HasPublicImages;
 use App\Traits\TracksViews;
@@ -49,6 +50,10 @@ class Service extends Model
 
     protected static function booted(): void
     {
+        // The header and footer menus list the active services.
+        static::saved(fn () => ShowcaseMenu::forget());
+        static::deleted(fn () => ShowcaseMenu::forget());
+
         // Projects are protected by a restrictive FK; only the cover is ours to clean up.
         static::deleting(function (Service $service) {
             if ($service->cover_path) {
