@@ -8,8 +8,7 @@ $maxYearlyDiscount = (int) $plans->max(fn ($plan) => $plan->yearlyDiscountPercen
 
 @if ($plans->isNotEmpty())
 {{-- The monthly/yearly switch is pure CSS (radio inputs + has-[]), so it needs no JavaScript. --}}
-{{-- No top border: the home hero above already closes with one. --}}
-<section id="planos" class="group/plans bg-surface">
+<section id="planos" class="group/plans border-t border-line bg-surface">
     <div class="mx-auto max-w-6xl px-4 py-16">
         <div class="mx-auto max-w-2xl text-center">
             <h2 class="text-3xl font-bold tracking-tight text-ink">Escolha o plano ideal para os seus projetos</h2>
