@@ -1,4 +1,10 @@
-@props(['service' => null, 'project' => null, 'inverse' => false])
+@props([
+    'service' => null,
+    'project' => null,
+    'inverse' => false,
+    // Full-width buttons one under the other, for narrow sidebars.
+    'stacked' => false,
+])
 
 @php
 $params = array_filter([
@@ -7,7 +13,7 @@ $params = array_filter([
 ]);
 @endphp
 
-<div {{ $attributes->merge(['class' => 'flex flex-col gap-3 sm:flex-row']) }}>
+<div {{ $attributes->merge(['class' => $stacked ? 'flex flex-col gap-3 [&_a]:w-full [&_button]:w-full' : 'flex flex-col gap-3 sm:flex-row']) }}>
     <x-ui.button :href="route('quotes.create', $params)" :variant="$inverse ? 'inverse' : 'primary'" size="lg">
         @svg('heroicon-o-document-text', 'size-5')
         Solicitar orçamento

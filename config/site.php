@@ -21,7 +21,7 @@ return [
         // "active" widens the highlight to every page of the section.
         ['label' => 'Famílias',  'route' => 'revit.families.index', 'active' => 'revit.families.*', 'icon' => 'rectangle-stack', 'enabled' => true, 'bottom' => true],
         ['label' => 'Serviços',  'route' => 'services.index',  'active' => 'services.*',  'icon' => 'briefcase', 'enabled' => true, 'bottom' => true, 'submenu' => 'services'],
-        ['label' => 'Portfólio', 'route' => 'portfolio.index', 'active' => 'portfolio.*', 'icon' => 'photo',     'enabled' => true, 'bottom' => false],
+        ['label' => 'Portfólio', 'route' => 'portfolio.index', 'active' => 'portfolio.*', 'icon' => 'photo',     'enabled' => false, 'bottom' => false], // hidden until there are projects
         
         ['label' => 'Templates', 'route' => 'templates.index', 'icon' => 'document-duplicate', 'enabled' => false, 'bottom' => false],
         ['label' => 'Planilhas', 'route' => 'sheets.index',    'icon' => 'table-cells',        'enabled' => false, 'bottom' => false],

@@ -58,7 +58,7 @@
                     @endforeach
                 </ul>
 
-                <x-site.showcase.cta-buttons :service="$service" class="mt-6 [&_a]:w-full [&_button]:w-full sm:flex-col" />
+                <x-site.showcase.cta-buttons :service="$service" stacked class="mt-6" />
             </aside>
             @endif
         </div>

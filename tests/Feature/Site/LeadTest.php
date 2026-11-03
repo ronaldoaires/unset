@@ -138,7 +138,7 @@ it('ignores a double submission of the same message', function () {
     expect(Lead::count())->toBe(1);
 });
 
-it('saves a "Fale conosco" message from the footer form', function () {
+it('saves a "Fale conosco" message', function () {
     $this->post('/contato', contactData())->assertRedirect(route('leads.thanks'));
 
     $lead = Lead::sole();
@@ -148,18 +148,22 @@ it('saves a "Fale conosco" message from the footer form', function () {
         ->and($lead->phone)->toBeNull();
 });
 
-it('keeps footer errors in their own bag and returns to the form', function () {
-    $this->from('/servicos')
+it('keeps "Fale conosco" errors in their own bag and returns to the form', function () {
+    $this->from('/contato')
         ->post('/contato', contactData(['contact_email' => 'nao-e-email']))
-        ->assertRedirect(url('/servicos') . '#fale-conosco')
+        ->assertRedirect(url('/contato') . '#fale-conosco')
         ->assertSessionHasErrors(['contact_email'], null, 'contact');
 
     expect(Lead::count())->toBe(0);
 });
 
-it('renders the footer form on regular pages but not on the quote page', function () {
-    $this->get('/servicos/engenharia')->assertOk()->assertSee('id="fale-conosco"', false);
-    $this->get('/orcamento')->assertOk()->assertDontSee('id="fale-conosco"', false);
+it('keeps the "Fale conosco" form on its own page, with only a link in the footer', function () {
+    $this->get('/contato')->assertOk()->assertSee('id="fale-conosco"', false);
+
+    $this->get('/servicos/engenharia')
+        ->assertOk()
+        ->assertDontSee('id="fale-conosco"', false)
+        ->assertSee(route('contact.show'), false);
 });
 
 it('never prints the WhatsApp number in the pages', function () {

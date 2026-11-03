@@ -43,5 +43,5 @@ it('shows the download button in the header', function () {
     $this->get(route('home'))
         ->assertOk()
         ->assertSee(route('plugin.download'), false)
-        ->assertSee('Baixar plugin');
+        ->assertSee('Plugin Revit');
 });

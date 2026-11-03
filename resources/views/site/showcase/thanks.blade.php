@@ -19,7 +19,7 @@
             </p>
 
             <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-                <x-ui.button :href="route('portfolio.index')" variant="tonal">Ver o portfólio</x-ui.button>
+                <x-ui.button :href="route('services.index')" variant="tonal">Ver os serviços</x-ui.button>
                 <x-ui.button :href="route('home')" variant="outline">Voltar ao início</x-ui.button>
             </div>
         </div>

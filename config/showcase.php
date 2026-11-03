@@ -27,6 +27,8 @@ return [
         'name'         => 'UnSet',
         'area_served'  => 'Brasil',
         'service_mode' => 'Atendimento online para todo o Brasil',
+        // Short version for tight spots, like the footer badge.
+        'service_mode_short' => 'Online para todo o Brasil',
     ],
 
     // The person behind the services. Each area shows the profile that

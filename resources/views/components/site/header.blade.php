@@ -36,7 +36,7 @@
                 aria-label="Baixar o plugin para Revit"
             >
                 @svg('heroicon-o-arrow-down-tray', 'size-5')
-                <span class="hidden md:inline">Baixar plugin</span>
+                <span class="hidden md:inline">Plugin Revit</span>
             </a>
 
             <x-site.user-menu />

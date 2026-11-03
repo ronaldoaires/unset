@@ -13,9 +13,9 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
 
 /**
- * "Fale conosco": the short form in the footer of every page (and on
- * /contato). Its fields are prefixed with "contact_" and its errors use
- * the "contact" bag, so they never mix with another form on the same page.
+ * "Fale conosco" form on /contato. Its fields are prefixed with "contact_"
+ * and its errors use the "contact" bag, so they never mix with another
+ * form that may share the page.
  */
 class ContactController extends Controller
 {
@@ -57,7 +57,7 @@ class ContactController extends Controller
                 'contact_message' => 'mensagem',
             ])->validate();
         } catch (ValidationException $exception) {
-            // Back to the form itself (the footer is at the bottom of a long page).
+            // Back to the form itself.
             return redirect()->to(url()->previous() . '#fale-conosco')
                 ->withErrors($exception->errors(), self::BAG)
                 ->withInput($request->except(['_token']));

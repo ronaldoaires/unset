@@ -28,6 +28,6 @@
             </div>
         </div>
 
-        <x-site.contact-form id="contato" class="h-fit rounded-card bg-surface p-6 shadow-card sm:p-8 lg:col-span-3" />
+        <x-site.contact-form id="fale-conosco" class="h-fit rounded-card bg-surface p-6 shadow-card sm:p-8 lg:col-span-3" />
     </div>
 </x-layouts.site>
