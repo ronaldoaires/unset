@@ -4,7 +4,7 @@ Reference for every client of the API (the Revit plugin first, future apps later
 The server is the source of truth: clients display and cache what it returns, but
 never decide access on their own.
 
-> Covered by `tests/Feature/Api` (AuthTest, AccessTest, CatalogTest, DownloadTest).
+> Covered by `tests/Feature/Api` (AuthTest, AccessTest, CatalogTest, DownloadTest, TextureApiTest).
 > Any change to this contract must update this file and those tests together.
 
 ---
@@ -51,6 +51,10 @@ User-Agent: UnSetBIM-Revit/{plugin version} (Revit {year})
 | POST | `/families/{slug}/favorite` | Bearer | 120/min | Add a favorite |
 | DELETE | `/families/{slug}/favorite` | Bearer | 120/min | Remove a favorite |
 | GET | `/me/downloads` | Bearer | 120/min | The user's download history |
+| GET | `/texture-categories` | Bearer | 120/min | Texture categories (section 13) |
+| GET | `/textures` | Bearer | 120/min | Paginated textures with filters |
+| GET | `/textures/{slug}` | Bearer | 120/min | Texture detail, resolutions + download decision |
+| GET | `/textures/{slug}/download` | Bearer | 120/min + 30/min | Download the texture package (ZIP) |
 
 Every authenticated endpoint also re-checks that the account is still active
 (see `account_inactive` below).
@@ -630,6 +634,7 @@ Never parse `message` text; it may change.
 | 403 | `email_not_verified` | Login only: e-mail not confirmed | Show message (link is in the user's inbox) |
 | 403 | `access_required` | Download denied: needs a subscription or a purchase | Show message; offer `purchase_url` (if present) and the plans page |
 | 403 | `quota_exceeded` | Download denied: monthly quota used up | Show message and `quota.resets_at` |
+| 403 | `subscription_required` | Texture download denied: needs any active plan | Show message and the plans page |
 | 404 | — | Family not found / not published / file missing. The `message` is not guaranteed — rely on the status. | "Família indisponível" |
 | 422 | — | Validation error or wrong credentials | Show `errors` |
 | 429 | `too_many_attempts` (login only) or none | Rate limited | Wait `Retry-After` seconds |
@@ -645,6 +650,7 @@ Never parse `message` text; it may change.
 | `too_many_attempts` | login | 429 |
 | `access_required` | family detail (`download.code`), download | 403 |
 | `quota_exceeded` | family detail (`download.code`), download | 403 |
+| `subscription_required` | texture detail (`download.code`), texture download | 403 |
 | `update_info_unavailable` | plugin/latest | 503 |
 | `authorization_pending` | auth/device/token | 400 |
 | `slow_down` | auth/device/token | 429 |
@@ -698,3 +704,165 @@ JSON errors).
 
 - Breaking changes go to a new prefix (`/api/v2`); `/api/v1` keeps working until clients migrate.
 - Adding new fields or new endpoints is **not** breaking: clients must ignore unknown fields.
+
+---
+
+## 13. Textures (materials module)
+
+PBR textures the plugin turns into native Revit materials. Same token and
+account rules as the rest of the API.
+
+**Access rule** (`TexturePolicy::download`): a free texture (`is_free`) is open
+to every signed-in user; any other texture needs **any active plan**
+(`access.has_access`). No quota, no one-off purchase, and plan `modules` play
+no part. Denied → `subscription_required`:
+`"Esta textura é exclusiva para assinantes."`
+
+**Real-world size:** `tile_width_mm` × `tile_height_mm` is the size of one
+repetition of the image. It is the same for every resolution, so switching
+resolution only swaps files, never the material's scale.
+
+**Resolutions:** `1k`, `2k`, `4k`, `8k`, detected by the server from the pixel
+size of each map. A resolution exists when it has a diffuse map. A map missing
+at a resolution is taken from the next lower one (or, failing that, the lowest
+higher one): low-detail maps (roughness, AO) are often shipped smaller.
+
+**Version:** `version` goes up every time the maps change. Clients cache
+packages by `slug` + `version` + `resolution` and download again only when the
+version changes.
+
+### 13.1 `GET /texture-categories`
+
+Active categories with at least one published texture, in display order.
+
+```json
+{ "data": [ { "id": 1, "name": "Pedra", "slug": "pedra", "textures_count": 12 } ] }
+```
+
+### 13.2 `GET /textures`
+
+| Param | Type | Rules | Effect |
+|---|---|---|---|
+| `q` | string | max 100 | Search in name and description |
+| `category` | string | max 120 | Texture category slug |
+| `material_type` | string | `pbr`, `glass`, `metal`, `water`, `mirror`, `emissive` | Only this kind of material |
+| `free` | boolean | `1` or `0` | `1` = only free, `0` = only subscriber textures |
+| `featured` | boolean | `1` | Only featured textures |
+| `sort` | string | `recent` (default), `downloads`, `name` | |
+| `per_page` | int | 1–50, default 24 | |
+| `page` | int | min 1 | |
+
+Same paginated shape as `/families` (`data`, `links`, `meta`). List item:
+
+```json
+{
+  "id": 7,
+  "slug": "pedra-rustica",
+  "name": "Pedra rústica",
+  "category": { "id": 1, "name": "Pedra", "slug": "pedra" },
+  "material_type": "pbr",
+  "material_type_label": "Imagem (PBR)",
+  "tile_width_mm": 600,
+  "tile_height_mm": 600,
+  "is_seamless": true,
+  "is_free": true,
+  "is_featured": false,
+  "shading_color": "#9f886e",
+  "thumbnail_url": "https://unset.com.br/media/textures/previews/thumbs/pedra-rustica.webp?v=1762640000",
+  "version": 3
+}
+```
+
+| Field | Notes |
+|---|---|
+| `shading_color` | Average color of the diffuse map (`#rrggbb`) for the material's shaded-view color; `null` without a diffuse map |
+| `thumbnail_url` | Cover thumbnail (generated from the diffuse map unless an admin uploaded a cover) |
+
+### 13.3 `GET /textures/{slug}`
+
+Everything in the list item, plus:
+
+```json
+{
+  "data": {
+    "...": "list item fields",
+    "description": null,
+    "preview_url": "https://unset.com.br/media/textures/previews/pedra-rustica.webp?v=1762640000",
+    "base_color": null,
+    "download_count": 41,
+    "updated_at": "2026-11-08T19:20:00-03:00",
+    "needs_download": true,
+    "resolutions": [
+      { "resolution": "1k", "width_px": 1024, "height_px": 1024, "maps": ["diffuse", "normal", "roughness"], "size_bytes": 7331191 }
+    ],
+    "default_resolution": "1k",
+    "download": {
+      "url": "https://unset.com.br/api/v1/textures/pedra-rustica/download",
+      "allowed": true,
+      "message": null,
+      "code": null
+    }
+  }
+}
+```
+
+| Field | Notes |
+|---|---|
+| `base_color` | `#rrggbb`. Main color of non-image materials (glass, metal…); optional tint for `pbr` |
+| `needs_download` | `false` for non-image materials: build them from a Revit library asset + `base_color`, no files to download |
+| `resolutions` | One entry per available resolution, lowest first. `maps` = map types in that package (`diffuse`, `normal`, `roughness`, `ao`, `displacement`, `alpha`, `metallic`); `size_bytes` = sum of the map files (the ZIP is about the same, files are stored uncompressed) |
+| `default_resolution` | What the download serves without `resolution`: the highest available up to `2k`. `null` when nothing can be downloaded |
+| `download.code` | `subscription_required` or `null` |
+
+**Errors:** 401, 403 `account_inactive`, 404 (unknown slug or not published), 429.
+
+### 13.4 `GET /textures/{slug}/download?resolution=2k`
+
+`resolution` is optional (`1k`, `2k`, `4k`, `8k`; anything else is 422). The
+server serves the requested resolution when it exists, otherwise the highest
+one below it, otherwise the lowest available; the response headers say which.
+
+**200 OK** — ZIP body:
+
+```
+Content-Type: application/zip
+Content-Disposition: attachment; filename={slug}-{resolution}.zip
+X-Texture-Version: 3
+X-Texture-Resolution: 1k
+```
+
+ZIP contents (flat): one file per map named `{type}.png` or `{type}.jpg`, plus
+`texture.json`:
+
+```json
+{
+  "slug": "pedra-rustica",
+  "name": "Pedra rústica",
+  "version": 3,
+  "resolution": "1k",
+  "material_type": "pbr",
+  "tile_width_mm": 600,
+  "tile_height_mm": 600,
+  "is_seamless": true,
+  "shading_color": "#9f886e",
+  "base_color": null,
+  "maps": { "diffuse": "diffuse.png", "normal": "normal.png", "roughness": "roughness.png" }
+}
+```
+
+Extract to a temporary folder and move it into the cache only when complete.
+
+**Recording:** every served package adds a history row (user, texture,
+resolution, version). The public `download_count` counts **users**: a user's
+later versions or resolutions do not increase it.
+
+**Errors (JSON)**
+
+| Status | When | Recorded? |
+|---|---|---|
+| 401 / 403 `account_inactive` | as everywhere | no |
+| 403 | `subscription_required` | no |
+| 404 | Unknown slug, not published, no diffuse map (incl. non-image materials) or file missing on disk | no |
+| 422 | Invalid `resolution` | no |
+| 429 | More than 30 texture downloads per minute | no |
+

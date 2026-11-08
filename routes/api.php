@@ -11,6 +11,9 @@ use App\Http\Controllers\Api\V1\FavoriteController;
 use App\Http\Controllers\Api\V1\DownloadHistoryController;
 use App\Http\Controllers\Api\V1\PluginReleaseController;
 use App\Http\Controllers\Api\V1\DeviceAuthController;
+use App\Http\Controllers\Api\V1\TextureCategoryController;
+use App\Http\Controllers\Api\V1\TextureController;
+use App\Http\Controllers\Api\V1\TextureDownloadController;
 
 // The "/api" prefix comes from bootstrap/app.php; versioning lives here.
 Route::prefix('v1')->name('api.v1.')->group(function () {
@@ -50,6 +53,16 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('families/{family:slug}/download', FamilyDownloadController::class)
             ->middleware('throttle:20,1,api-download')
             ->name('families.download');
+
+        // Textures (materials module). Free ones for every user, the others
+        // for any active plan; see TexturePolicy::download().
+        Route::get('texture-categories', [TextureCategoryController::class, 'index'])->name('texture-categories.index');
+        Route::get('textures', [TextureController::class, 'index'])->name('textures.index');
+        Route::get('textures/{texture:slug}', [TextureController::class, 'show'])->name('textures.show');
+
+        Route::get('textures/{texture:slug}/download', TextureDownloadController::class)
+            ->middleware('throttle:30,1,api-texture-download')
+            ->name('textures.download');
 
         // The user's own lists. Favorites are open to every verified user.
         Route::get('me/favorites', [FavoriteController::class, 'index'])->name('me.favorites.index');
