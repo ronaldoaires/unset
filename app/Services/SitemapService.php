@@ -9,6 +9,7 @@ use App\Models\Family;
 use App\Models\Project;
 use App\Models\Service;
 use App\Models\Subcategory;
+use App\Models\Texture;
 use Illuminate\Support\Carbon;
 
 /**
@@ -85,6 +86,22 @@ class SitemapService
             $entries[] = [
                 'loc'     => route('revit.families.show', ['family' => $family->slug]),
                 'lastmod' => $this->iso($family->updated_at),
+            ];
+        }
+
+        $entries[] = [
+            'loc'     => route('revit.textures.index'),
+            'lastmod' => $this->iso(Texture::published()->max('updated_at')),
+        ];
+
+        $textures = Texture::published()
+            ->select(['id', 'slug', 'updated_at'])
+            ->lazyById(1000);
+
+        foreach ($textures as $texture) {
+            $entries[] = [
+                'loc'     => route('revit.textures.show', ['texture' => $texture->slug]),
+                'lastmod' => $this->iso($texture->updated_at),
             ];
         }
 

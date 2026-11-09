@@ -8,6 +8,8 @@ use App\Http\Controllers\Site\Revit\SubcategoryController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Site\Revit\FamilyFavoriteController;
 use App\Http\Controllers\Site\Revit\FamilyPurchaseController;
+use App\Http\Controllers\Site\Revit\TextureController;
+use App\Http\Controllers\Site\Revit\TextureDownloadController;
 
 // The "/revit" prefix and the "revit." name prefix come from routes/site.php.
 
@@ -56,3 +58,13 @@ Route::get('/categorias/{category:slug}/{subcategory:slug}', [SubcategoryControl
     ->name('subcategories.show');
 
 Route::get('/marcas/{brand:slug}', [BrandController::class, 'show'])->name('brands.show');
+
+// PBR textures: public listing and page; downloading the ZIP needs a verified
+// account (free textures) or any active plan (the others), see TexturePolicy.
+Route::get('/texturas', [TextureController::class, 'index'])->name('textures.index');
+
+Route::get('/texturas/{texture:slug}', [TextureController::class, 'show'])->name('textures.show');
+
+Route::get('/texturas/{texture:slug}/baixar', TextureDownloadController::class)
+    ->middleware(['auth', 'verified', 'throttle:20,1'])
+    ->name('textures.download');

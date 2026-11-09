@@ -32,6 +32,7 @@
 {{-- The bottom padding keeps content and footer clear of the mobile bottom bar. --}}
 <body class="flex min-h-screen flex-col bg-canvas pb-20 text-ink antialiased md:pb-0">
 
+    <x-site.announcement />
     <x-site.header />
     <x-site.verify-banner />
     <x-site.flash />
