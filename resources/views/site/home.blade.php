@@ -25,6 +25,8 @@
     </section>
 
     {{-- Section order: change it here; each section hides itself when empty. --}}
+    <x-site.sections.textures :textures="$textures" />
+
     <x-site.sections.plans :plans="$plans" />
 
     <x-site.sections.services :areas="$areas" />

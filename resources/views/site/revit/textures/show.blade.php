@@ -13,11 +13,38 @@
 
         <div class="mt-4 grid gap-6 lg:grid-cols-5">
             <div class="flex flex-col items-center justify-center rounded-card bg-gradient-to-b from-white to-canvas p-8 shadow-card lg:col-span-2">
-                <x-site.revit.texture-sphere :texture="$texture" size="large" class="w-full max-w-sm" />
-
                 @if ($texture->preview_url)
-                    <a href="{{ $texture->preview_url }}" target="_blank" rel="noopener"
-                       class="mt-6 text-sm font-medium text-primary hover:underline">Ver a imagem plana ↗</a>
+                    {{-- Native <dialog>: Esc closes it for free; a click on the dark area closes it too. --}}
+                    <button type="button" class="w-full max-w-sm cursor-zoom-in rounded-full focus:outline-none focus-visible:ring-4 focus-visible:ring-primary/40"
+                            onclick="document.getElementById('texture-image').showModal()"
+                            aria-label="Ver a imagem plana da textura">
+                        <x-site.revit.texture-sphere :texture="$texture" size="large" class="w-full" />
+                    </button>
+
+                    <button type="button" onclick="document.getElementById('texture-image').showModal()"
+                            class="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline">
+                        @svg('heroicon-o-magnifying-glass-plus', 'size-4')
+                        Ver a imagem plana
+                    </button>
+
+                    <dialog id="texture-image"
+                            class="m-auto w-fit max-w-[92vw] overflow-visible bg-transparent p-0 backdrop:bg-black/80"
+                            onclick="if (event.target === this) this.close()">
+                        <div class="relative">
+                            <img src="{{ $texture->preview_url }}" alt="{{ $texture->name }} - textura PBR"
+                                 class="mx-auto block max-h-[80vh] w-auto max-w-full rounded-card shadow-2xl" loading="lazy">
+                            <button type="button" onclick="this.closest('dialog').close()"
+                                    class="absolute -top-3 -right-3 flex size-10 items-center justify-center rounded-full bg-white text-ink shadow-lg transition hover:bg-canvas"
+                                    aria-label="Fechar">
+                                @svg('heroicon-o-x-mark', 'size-5')
+                            </button>
+                            <p class="mt-3 text-center text-sm text-white/80">
+                                Uma repetição da textura · {{ $sizeText }} no tamanho real
+                            </p>
+                        </div>
+                    </dialog>
+                @else
+                    <x-site.revit.texture-sphere :texture="$texture" size="large" class="w-full max-w-sm" />
                 @endif
             </div>
 
